@@ -4,12 +4,12 @@
 #include "draw.h"
 #include "synth.h"
 
-enum { GF_KEY_COUNT = 13, GF_WHITE_COUNT = 8, GF_VISIBLE_PATCHES = 5 };
+enum { GF_KEY_COUNT = 13, GF_WHITE_COUNT = 8, GF_VISIBLE_PATCHES = 5, GF_PATCH_JUMP = 10 };
 
 typedef struct {
     float width, height;
     bool touch;
-    Rect scene, bank, controls[GF_CONTROL_COUNT], keys, previous, next;
+    Rect scene, bank, controls[GF_CONTROL_COUNT], keys, previous, next, jump_back, jump_forward;
 } Layout;
 
 typedef struct {

@@ -55,9 +55,25 @@ def desktop(browser, url, screenshots):
     page.keyboard.up("s")
     page.wait_for_function("Module._gf_web_held() === 0")
 
-    page.mouse.click(*point(page, 929, 407))
+    page.keyboard.press("PageUp")
+    page.wait_for_function("Module._gf_web_patch() === 90")
+    page.keyboard.press("PageDown")
+    page.wait_for_function("Module._gf_web_patch() === 0")
+    page.keyboard.press("ArrowUp")
+    page.wait_for_function("Module._gf_web_patch() === 99")
+    page.keyboard.down("a")
+    page.wait_for_function("Module._gf_web_peak() > .012")
+    page.keyboard.up("a")
+    page.keyboard.press("ArrowDown")
+    page.wait_for_function("Module._gf_web_patch() === 0")
+
+    page.mouse.click(*point(page, 888, 407))
     page.wait_for_function("Module._gf_web_patch() === 1")
     page.mouse.click(*point(page, 805, 286))
+    page.wait_for_function("Module._gf_web_patch() === 2")
+    page.mouse.click(*point(page, 932, 407))
+    page.wait_for_function("Module._gf_web_patch() === 12")
+    page.mouse.click(*point(page, 713, 407))
     page.wait_for_function("Module._gf_web_patch() === 2")
     page.mouse.click(*point(page, 295, 526))
     page.wait_for_function("Module._gf_web_control(0) > .90")
@@ -89,7 +105,11 @@ def mobile(browser, url, screenshots):
     assert page.evaluate("Module._gf_web_touch()") == 1
     if screenshots:
         page.screenshot(path=screenshots / "mobile.png")
-    page.touchscreen.tap(*point(page, 369, 367, 420))
+    page.touchscreen.tap(*point(page, 368, 372, 420))
+    page.wait_for_function("Module._gf_web_patch() === 10")
+    page.touchscreen.tap(*point(page, 52, 372, 420))
+    page.wait_for_function("Module._gf_web_patch() === 0")
+    page.touchscreen.tap(*point(page, 310, 372, 420))
     page.wait_for_function("Module._gf_web_patch() === 1")
 
     cdp = page.context.new_cdp_session(page)
@@ -103,7 +123,7 @@ def mobile(browser, url, screenshots):
     page.set_viewport_size({"width": 844, "height": 390})
     page.wait_for_function("document.querySelector('#canvas').width === " +
                            "document.querySelector('#canvas').clientWidth * devicePixelRatio")
-    page.touchscreen.tap(*point(page, 775, 101, 820, 454))
+    page.touchscreen.tap(*point(page, 721, 137, 820, 454))
     assert page.evaluate("Module._gf_web_touch()") == 1
     page.wait_for_function("Module._gf_web_patch() === 2")
     assert not errors, errors

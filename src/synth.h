@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-enum { GF_VOICES = 12, GF_PATCHES = 24, GF_NAME = 32, GF_MAX_RATE = 96000,
+enum { GF_VOICES = 12, GF_PATCHES = 100, GF_NAME = 32, GF_MAX_RATE = 96000,
        GF_NOTES = 128, GF_DELAY = GF_MAX_RATE / 2 };
 
 typedef enum { GF_SINE, GF_TRIANGLE, GF_SAW, GF_SQUARE, GF_NOISE } GF_Wave;

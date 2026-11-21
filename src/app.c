@@ -185,10 +185,10 @@ static bool reload_bank(void)
     return true;
 }
 
-static void step_patch(int direction)
+static void step_patch(int step)
 {
     const int count = (int)app.bank.count;
-    select_patch((size_t)(((int)app.selected + direction + count) % count));
+    select_patch((size_t)(((int)app.selected + step % count + count) % count));
 }
 
 static void update_control(const Layout *layout, int control, float x)
@@ -223,13 +223,15 @@ static void pointer(Contact *contact, const Layout *layout, int phase, float x, 
         else update_note(contact, layout, x, y);
         return;
     }
-    if (inside(layout->previous, x, y)) {
-        step_patch(-1);
-        return;
-    }
-    if (inside(layout->next, x, y)) {
-        step_patch(1);
-        return;
+    const struct { Rect bounds; int step; } navigation[] = {
+        {layout->jump_back, -GF_PATCH_JUMP}, {layout->previous, -1},
+        {layout->next, 1}, {layout->jump_forward, GF_PATCH_JUMP}
+    };
+    for (size_t i = 0; i < SDL_arraysize(navigation); ++i) {
+        if (inside(navigation[i].bounds, x, y)) {
+            step_patch(navigation[i].step);
+            return;
+        }
     }
     if (!layout->touch && inside(layout->bank, x, y)) {
         const size_t first = panel_first_patch(app.selected, app.bank.count);
@@ -302,6 +304,8 @@ static void keyboard_event(const SDL_KeyboardEvent *event)
         return;
     case SDL_SCANCODE_UP: step_patch(-1); return;
     case SDL_SCANCODE_DOWN: step_patch(1); return;
+    case SDL_SCANCODE_PAGEUP: step_patch(-GF_PATCH_JUMP); return;
+    case SDL_SCANCODE_PAGEDOWN: step_patch(GF_PATCH_JUMP); return;
     case SDL_SCANCODE_R:
 #ifndef __EMSCRIPTEN__
         reload_bank();
@@ -558,7 +562,7 @@ EMSCRIPTEN_KEEPALIVE void gf_xr_draw(int x, int y, int width, int height)
 #else
 static bool smoke_test(void)
 {
-    if (app.bank.count != 5 || !app.sample || !app.audio || app.mesh.face_count == 0) return false;
+    if (app.bank.count != GF_PATCHES || !app.sample || !app.audio || app.mesh.face_count == 0) return false;
     SDL_Event press = {0};
     press.key.type = SDL_EVENT_KEY_DOWN;
     press.key.down = true;
@@ -573,6 +577,10 @@ static bool smoke_test(void)
             if (!SDL_PushEvent(&press)) return false;
             frame_loop();
             if (app.held[60]) return false;
+            step_patch(-1);
+            if (app.selected != GF_PATCHES - 1) return false;
+            step_patch(1);
+            if (app.selected != 0 || !app.sample) return false;
             step_patch(1);
             return app.selected == 1 && app.sample == NULL;
         }

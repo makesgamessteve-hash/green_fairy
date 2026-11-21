@@ -16,23 +16,26 @@ Layout panel_layout(bool touch, bool landscape)
     if (touch && landscape) {
         return (Layout){
             .width = 820, .height = 454, .touch = true,
-            .scene = {16, 71, 474, 210}, .bank = {505, 71, 299, 65},
-            .controls = {{505, 149, 93, 132}, {608, 149, 93, 132}, {711, 149, 93, 132}},
-            .keys = {19, 328, 782, 91}, .previous = {513, 79, 47, 48}, .next = {749, 79, 47, 48}
+            .scene = {16, 71, 474, 210}, .bank = {505, 71, 299, 98},
+            .controls = {{505, 179, 93, 102}, {608, 179, 93, 102}, {711, 179, 93, 102}},
+            .keys = {19, 328, 782, 91}, .previous = {565, 114, 46, 46}, .next = {698, 114, 46, 46},
+            .jump_back = {513, 114, 46, 46}, .jump_forward = {750, 114, 46, 46}
         };
     }
     if (touch) {
         return (Layout){
             .width = 420, .height = 740, .touch = true,
-            .scene = {16, 80, 388, 236}, .bank = {16, 329, 388, 72},
+            .scene = {16, 80, 388, 218}, .bank = {16, 310, 388, 94},
             .controls = {{16, 414, 124, 96}, {148, 414, 124, 96}, {280, 414, 124, 96}},
-            .keys = {19, 555, 382, 143}, .previous = {26, 340, 48, 50}, .next = {346, 340, 48, 50}
+            .keys = {19, 555, 382, 143}, .previous = {84, 349, 52, 46}, .next = {284, 349, 52, 46},
+            .jump_back = {26, 349, 52, 46}, .jump_forward = {342, 349, 52, 46}
         };
     }
     return (Layout){
         .width = 1000, .height = 740, .scene = {26, 107, 629, 332}, .bank = {673, 107, 301, 332},
         .controls = {{26, 457, 304, 103}, {348, 457, 304, 103}, {670, 457, 304, 103}},
-        .keys = {39, 612, 922, 86}, .previous = {690, 388, 55, 35}, .next = {902, 388, 55, 35}
+        .keys = {39, 612, 922, 86}, .previous = {741, 388, 36, 35}, .next = {870, 388, 36, 35},
+        .jump_back = {690, 388, 45, 35}, .jump_forward = {912, 388, 45, 35}
     };
 }
 
@@ -204,15 +207,21 @@ static void patches(const Layout *layout, const PanelView *v)
     const Color highlighted = ink(0xd4e986), pale = ink(0xe5ead2), muted = ink(0x9fb2a3);
     const char *name = v->bank->patches[v->selected].name;
     instrument_panel(r);
+    button(layout->jump_back, "<<");
     button(layout->previous, "<");
     button(layout->next, ">");
+    button(layout->jump_forward, ">>");
+    char count[24];
+    snprintf(count, sizeof(count), "%03d / %03d", (int)v->selected + 1, (int)v->bank->count);
+    const float count_size = layout->touch ? 13 : 15;
+    const float count_y = layout->previous.y + (layout->previous.h - count_size) / 2;
+    center_text(r.x, count_y, r.w, count_size, muted, count);
     if (layout->touch) {
-        center_text(r.x + 64, r.y + 9, r.w - 128, 11, muted, "PATCH");
-        const float width = r.w - 135;
-        const float size = fminf(23, 23 * width / text_width(23, name));
-        center_text(r.x + 65, r.y + 26, r.w - 130, size, pale, name);
+        const float width = r.w - 24;
+        const float size = fminf(25, 25 * width / fmaxf(1, text_width(25, name)));
+        center_text(r.x + 12, r.y + 9, width, size, pale, name);
     } else {
-        text(r.x + 17, r.y + 13, 14, highlighted, "PATCH BANK");
+        text(r.x + 17, r.y + 13, 14, highlighted, "PRESET BANK");
         fit_text(r.x + 17, r.y + 39, r.w - 34, 30, pale, name);
         box((Rect){r.x + 17, r.y + 82, r.w - 34, 1}, ink(0x3e5041));
         const size_t first = panel_first_patch(v->selected, v->bank->count);
@@ -224,14 +233,11 @@ static void patches(const Layout *layout, const PanelView *v)
             frame(p, ink(active ? 0x667955 : 0x293a31));
             if (active) box((Rect){p.x, p.y, 3, p.h}, highlighted);
             char number[12];
-            snprintf(number, sizeof(number), "%02d", (int)index + 1);
+            snprintf(number, sizeof(number), "%03d", (int)index + 1);
             text(p.x + 11, p.y + 8, 14, active ? highlighted : muted, number);
             fit_text(p.x + 44, p.y + 7, p.w - 53, 16, active ? pale : muted,
                      v->bank->patches[index].name);
         }
-        char count[24];
-        snprintf(count, sizeof(count), "%02d / %02d", (int)v->selected + 1, (int)v->bank->count);
-        center_text(r.x, r.y + 229 + 65, r.w, 15, muted, count);
     }
 }
 

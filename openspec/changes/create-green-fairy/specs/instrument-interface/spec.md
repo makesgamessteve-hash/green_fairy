@@ -10,6 +10,10 @@ The instrument SHALL display an animated 3D mesh and sprites from replaceable ex
 ### Requirement: Keyboard, pointer, and touch
 The instrument SHALL support physical key bindings and on-screen controls, and SHALL select a larger touch layout on mobile browsers.
 
+#### Scenario: Browse a full preset bank
+- **WHEN** the player browses presets with the on-screen arrows or keyboard shortcuts
+- **THEN** the controls move one or ten presets, wrap around at the ends of the bank, and show the current position
+
 #### Scenario: Play on a mobile browser
 - **WHEN** a touch device opens the web instrument and taps a key
 - **THEN** the layout provides touch-sized keys and the instrument plays and releases the note

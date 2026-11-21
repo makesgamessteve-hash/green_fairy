@@ -1,13 +1,14 @@
 # Green Fairy
 
-Green Fairy is a standalone 12-voice software synthesizer for evolving pads, textures, and basses. The original retro 3D instrument panel runs with SDL3 and OpenGL on desktop, and with WebGL 2 on the web. The C engine handles audio, input, and rendering. Editable Lua scripts define the patch bank.
+Green Fairy is a standalone 12-voice software synthesizer with 100 presets, including evolving pads, keys, plucks, basses, leads, percussion, and sound effects. The original retro 3D instrument panel runs with SDL3 and OpenGL on desktop, and with WebGL 2 on the web. The C engine handles audio, input, and rendering. Editable Lua scripts define the patch bank.
 
 ## Play
 
 | Action | Keyboard | On-screen |
 | --- | --- | --- |
 | Play C through the next C | `A W S E D F T G Y H U J K` | Click, tap, or slide on the keys |
-| Change patches | Up / Down | Patch list or arrow buttons |
+| Change presets | Up / Down | Preset list or `<` / `>` |
+| Jump ten presets | Page Up / Page Down | `<<` / `>>` |
 | Shift the keyboard one octave | `Z` / `X` | |
 | Reload an edited patch bank | `R` on desktop | Refresh on the web |
 | Shape the sound | | Drag Morph, Color, or Echo |
@@ -55,7 +56,7 @@ Set the repository's **Settings → Pages → Build and deployment → Source** 
 
 Edit the installed `assets/` directory alongside the executable on Windows and Linux. On macOS it lives in the app bundle under `Contents/Resources/assets/`. On the web it lives alongside `instrument.wasm`.
 
-- **Scripts.** Edit `assets/scripts/bank.lua`. Return an ordered array of 1–24 patch tables. Omitted fields take their defaults. Lua arithmetic and the `math` library are available.
+- **Scripts.** Edit `assets/scripts/bank.lua`. Return an ordered array of 1–100 patch tables. Omitted fields take their defaults. Lua arithmetic and the `math` library are available.
 - **Sounds.** Add a WAV file to `assets/sounds/`, put its filename in `sample_file`, and set the `sample` gain. The engine plays it as a one-shot pitched relative to C4. For example, the bundled Glass Canopy patch layers `canopy.wav`.
 - **Graphics.** Replace `assets/graphics/prism.obj` with an OBJ containing up to 256 vertices and 512 triangular faces. Use coordinates from −2 to 2 and plain one-based face indices. Replace `studio.bmp` to reskin the glyphs and sprites. Keep the 192 × 160 dimensions and existing tile locations.
 - **Web files.** Add each new asset referenced by a script to `assets/manifest.json`. The web app fetches the files at startup, so a page refresh picks up deployed edits.

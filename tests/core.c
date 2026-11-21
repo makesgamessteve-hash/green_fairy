@@ -115,28 +115,53 @@ static void sample_and_delay(void)
     CHECK(synth.sample == NULL && synth.peak == 0);
 }
 
+static void factory_presets(const GF_Bank *bank)
+{
+    float signatures[GF_PATCHES][16];
+    for (size_t i = 0; i < bank->count; ++i) {
+        const GF_Patch *patch = &bank->patches[i];
+        gf_init(&synth, 48000);
+        gf_set_patch(&synth, patch);
+        gf_note_on(&synth, 60, .8f);
+        gf_render(&synth, output, 8000);
+        CHECK(energy(output, 16000) > .1f);
+        for (size_t k = 0; k < 16; ++k) signatures[i][k] = output[(k + 1) * 479 * 2];
+        for (size_t previous = 0; previous < i; ++previous) {
+            CHECK(strcmp(patch->name, bank->patches[previous].name) != 0);
+            CHECK(memcmp(signatures[i], signatures[previous], sizeof(signatures[i])) != 0);
+        }
+    }
+}
+
 static void lua_bank(const char *asset)
 {
     char error[256] = "initial";
     GF_Bank bank;
     FILE *file = fopen(asset, "rb");
     CHECK(file);
-    char source[8192];
-    const size_t length = fread(source, 1, sizeof(source), file);
-    CHECK(feof(file) && !ferror(file));
+    CHECK(fseek(file, 0, SEEK_END) == 0);
+    const long length = ftell(file);
+    CHECK(length > 0);
+    CHECK(fseek(file, 0, SEEK_SET) == 0);
+    char *source = malloc((size_t)length);
+    CHECK(source);
+    CHECK(fread(source, 1, (size_t)length, file) == (size_t)length);
     CHECK(fclose(file) == 0);
-    CHECK(gf_bank_parse(source, length, &bank, error, sizeof(error)));
-    CHECK(bank.count == 5 && !error[0]);
+    CHECK(gf_bank_parse(source, (size_t)length, &bank, error, sizeof(error)));
+    free(source);
+    CHECK(bank.count == 100 && !error[0]);
     CHECK(strcmp(bank.patches[0].name, "Glass Canopy") == 0);
     CHECK(strcmp(bank.patches[0].sample_file, "canopy.wav") == 0);
     CHECK(bank.patches[4].detune == -1200);
     CHECK(bank.patches[3].wave_b == GF_NOISE);
+    CHECK(strcmp(bank.patches[99].name, "Blacklight") == 0);
+    factory_presets(&bank);
     const GF_Bank last_good = bank;
     const struct { const char *lua, *error; } invalid[] = {
         {"return ][", "unexpected"},
         {"return 7", "return a table"},
-        {"return {}", "1 to 24"},
-        {"local bank = {}; for i = 1, 25 do bank[i] = {} end; return bank", "1 to 24"},
+        {"return {}", "1 to 100"},
+        {"local bank = {}; for i = 1, 101 do bank[i] = {} end; return bank", "1 to 100"},
         {"return {3}", "patch 1"},
         {"return {{wave_a='no-such-wave'}}", "unrecognized waveform"},
         {"return {{name=2}}", "nonempty text"},

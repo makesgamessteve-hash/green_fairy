@@ -17,4 +17,9 @@
 ## 4. GitHub Pages
 
 - [x] 4.1 Add the Pages deployment job and exercise the web build under a project URL path.
-- [ ] 4.2 Enable GitHub Pages on the repository and verify the public deployment.
+- [x] 4.2 Enable GitHub Pages on the repository and verify the public deployment.
+
+## 5. Factory presets
+
+- [x] 5.1 Expand the external Lua bank to 100 playable presets and verify the loader limit.
+- [x] 5.2 Add single-preset and ten-preset navigation to the desktop and touch layouts.
