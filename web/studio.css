@@ -1,0 +1,79 @@
+:root {
+  color-scheme: dark;
+  background: #0e1916;
+  color: #e5ead2;
+  font-family: ui-monospace, "Courier New", monospace;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+#studio {
+  position: fixed;
+  inset: env(safe-area-inset-top) env(safe-area-inset-right)
+         env(safe-area-inset-bottom) env(safe-area-inset-left);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+#studio.xr-available {
+  grid-template-rows: minmax(0, 1fr) 42px;
+}
+
+#canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0;
+  min-height: 0;
+  outline-offset: -2px;
+  touch-action: none;
+  user-select: none;
+}
+
+#canvas:focus:not(:focus-visible) {
+  outline: none;
+}
+
+#status {
+  position: absolute;
+  top: 44%;
+  inset-inline: 1rem;
+  margin: 0 auto;
+  width: fit-content;
+  max-width: min(85%, 42rem);
+  padding: 0.85rem 1rem;
+  background: #14231e;
+  border: 1px solid #4d6855;
+  color: #d9e8bb;
+  text-align: center;
+  pointer-events: none;
+}
+
+#xr {
+  justify-self: center;
+  align-self: start;
+  min-height: 34px;
+  padding: 0.25rem 1.1rem;
+  border: 1px solid #526b54;
+  border-radius: 0;
+  background: #1d3026;
+  color: #d7ed83;
+  font: inherit;
+  cursor: pointer;
+}
+
+#xr:hover {
+  background: #304633;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

@@ -1,0 +1,85 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux video and audio build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libpulse-dev libx11-dev libxext-dev \
+            libxrandr-dev libxi-dev libxcursor-dev libxfixes-dev libgl-dev libegl-dev xvfb xauth
+      - name: Build and test
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release --parallel
+          ctest --test-dir build -C Release --output-on-failure
+      - name: Exercise SDL window, input and audio
+        if: runner.os == 'Linux'
+        run: SDL_AUDIODRIVER=dummy LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a ./build/green-fairy --smoke
+
+      - name: Package desktop distribution
+        run: |
+          cmake --install build --config Release --prefix dist
+          tar -czf green-fairy-${{ runner.os }}.tar.gz -C dist .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: green-fairy-${{ runner.os }}
+          path: green-fairy-${{ runner.os }}.tar.gz
+
+  coverage-and-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate OpenSpec
+        run: npm exec --yes --package @fission-ai/openspec@2.1.1 -- openspec validate create-green-fairy --strict
+      - name: Enforce 95% unit line and branch coverage
+        run: |
+          python -m pip install gcovr==8.8
+          cmake -S . -B build-core -DGF_BUILD_APP=OFF -DGF_COVERAGE=ON
+          cmake --build build-core --parallel
+          ctest --test-dir build-core --output-on-failure
+          python -m gcovr --root . --filter 'src/(synth|bank)\.c$' --fail-under-line 95 --fail-under-branch 95 build-core
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 4.0.23
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build the web distribution
+        run: |
+          emcmake cmake -S . -B build-web -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-web --parallel
+      - name: Run desktop web, touch, and mocked WebXR end-to-end tests
+        run: |
+          python -m pip install playwright==1.65.2
+          python -m playwright install --with-deps chromium
+          python tests/browser.py build-web/web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: green-fairy-web
+          path: build-web/web

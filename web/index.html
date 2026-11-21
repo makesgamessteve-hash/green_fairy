@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e1916">
+  <title>Green Fairy — Software Synthesizer</title>
+  <link rel="stylesheet" href="studio.css">
+</head>
+<body>
+  <main id="studio" aria-label="Green Fairy synthesizer">
+    <canvas id="canvas" tabindex="0" aria-label="Green Fairy instrument" aria-describedby="help">
+      Green Fairy requires a browser with Canvas and WebGL 2.
+    </canvas>
+    <p id="help" class="visually-hidden">Play with A W S E D F T G Y H U J K, or use the on-screen keys.
+      Up and Down change patches. Z and X change octave.</p>
+    <p id="status" role="status">Loading Green Fairy…</p>
+    <button type="button" id="xr" hidden>Enter VR</button>
+  </main>
+  <script src="studio.js"></script>
+  <script src="instrument.js" async></script>
+</body>
+</html>

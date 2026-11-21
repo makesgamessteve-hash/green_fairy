@@ -1,0 +1,6 @@
+schema: spec-driven
+context: |
+  Green Fairy is a standalone C11 software synthesizer with an original retro
+  3D interface built with SDL3 and OpenGL. Runtime content lives under assets/.
+  Desktop ships on Linux, Windows and macOS. Emscripten targets WebGL 2 and WebXR.
+  The C synth and Lua bank loader must maintain at least 95% unit line and branch coverage.
