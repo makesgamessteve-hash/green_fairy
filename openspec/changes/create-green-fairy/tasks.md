@@ -29,3 +29,10 @@
 - [x] 6.1 Define an editable 3D scene for every factory preset and package its model assets.
 - [x] 6.2 Verify scene switching and custom mesh fallback on the supported builds.
 - [x] 6.3 Document the synth components and the editable scene fields.
+
+## 7. Advanced sound design
+
+- [x] 7.1 Add resonant voice filters and a separate filter envelope.
+- [x] 7.2 Add the modulation matrix, looping shape envelopes, and velocity accents.
+- [x] 7.3 Add granular playback and demonstrate the new features in factory presets.
+- [x] 7.4 Validate the DSP, Lua options, and browser playback and document the controls.

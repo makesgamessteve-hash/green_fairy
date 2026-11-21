@@ -194,7 +194,10 @@ static void visualizer(const Layout *l, const PanelView *v)
     const float pad = l->touch ? 12 : 17;
     sprite((Rect){r.x + pad, r.y + 16, 8, 8}, 2, highlight);
     text(r.x + pad + 15, r.y + 11, 15, ink(0xb5c6ab), "SIGNAL FIELD");
-    text(r.x + r.w - pad - 59, r.y + 11, 13, ink(0x789485), "STEREO");
+    const GF_Patch *patch = &v->bank->patches[v->selected];
+    static const char *const modes[] = {"STEREO", "LOW-PASS", "BAND-PASS", "HIGH-PASS"};
+    const char *mode = patch->grain.density > 0 ? "GRANULAR" : modes[patch->filter.mode];
+    text(r.x + r.w - pad - text_width(13, mode), r.y + 11, 13, highlight, mode);
     box((Rect){r.x + 1, bottom, r.w - 2, 40}, field_bottom);
     box((Rect){r.x + 1, bottom, r.w - 2, 1}, grid);
     text(r.x + pad, bottom + 13, 13, ink(0xb0bd9d), "OUTPUT");

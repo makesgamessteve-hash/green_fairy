@@ -12,5 +12,6 @@
   "graphics/relay.obj",
   "graphics/spire.obj",
   "scripts/bank.lua",
-  "sounds/canopy.wav"
+  "sounds/canopy.wav",
+  "sounds/orchard-air.wav"
 ]

@@ -64,7 +64,7 @@ def desktop(browser, url, screenshots):
     requests = set()
     page.on("response", lambda response: requests.add(response.url) if response.ok else None)
     errors = load(page, url)
-    for path in ("manifest.json", "scripts/bank.lua", "sounds/canopy.wav",
+    for path in ("manifest.json", "scripts/bank.lua", "sounds/canopy.wav", "sounds/orchard-air.wav",
                  "graphics/studio.bmp", "graphics/prism.obj"):
         assert url + "assets/" + path in requests, path
     assert sum(request.endswith(".obj") for request in requests) == 11
@@ -102,6 +102,15 @@ def desktop(browser, url, screenshots):
     page.mouse.click(*point(page, 888, 407))
     page.wait_for_function("Module._gf_web_patch() === 1")
     page.mouse.click(*point(page, 805, 286))
+    page.wait_for_function("Module._gf_web_patch() === 2")
+    page.keyboard.press("ArrowDown")
+    page.wait_for_function("Module._gf_web_patch() === 3")
+    page.keyboard.down("Shift")
+    page.keyboard.down("a")
+    page.wait_for_function("Module._gf_web_held() === 1 && Module._gf_web_peak() > .012")
+    page.keyboard.up("a")
+    page.keyboard.up("Shift")
+    page.keyboard.press("ArrowUp")
     page.wait_for_function("Module._gf_web_patch() === 2")
     page.mouse.click(*point(page, 932, 407))
     page.wait_for_function("Module._gf_web_patch() === 12")

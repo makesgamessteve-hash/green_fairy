@@ -50,7 +50,7 @@ static void synthesis(void)
         CHECK(synth.voices[0].frequency == 440);
         gf_render(&synth, output, 500);
         CHECK(energy(output, 1000) > 1);
-        CHECK(synth.voices[0].stage == GF_SUSTAIN);
+        CHECK(synth.voices[0].amp.stage == GF_SUSTAIN);
         gf_note_off(&synth, 69);
         gf_note_off(&synth, 69);
         gf_render(&synth, output, 500);
@@ -85,9 +85,9 @@ static void notes_and_controls(void)
     gf_note_on(&synth, 90, 1);
     CHECK(synth.voices[0].note == 90);
     gf_note_on(&synth, 90, 0);
-    CHECK(synth.voices[0].stage == GF_RELEASE);
+    CHECK(synth.voices[0].amp.stage == GF_RELEASE);
     gf_note_on(&synth, 42, NAN);
-    CHECK(synth.voices[2].stage == GF_RELEASE);
+    CHECK(synth.voices[2].amp.stage == GF_RELEASE);
     gf_all_notes_off(&synth);
     gf_render(&synth, output, 1);
     CHECK(gf_active_voices(&synth) == 0);
@@ -113,6 +113,126 @@ static void sample_and_delay(void)
     gf_set_patch(&synth, &patch);
     CHECK(synth.delay_l[0] == 0 && synth.delay_r[0] == 0);
     CHECK(synth.sample == NULL && synth.peak == 0);
+}
+
+static float filtered_tone(GF_Patch patch, GF_FilterMode mode, int note)
+{
+    gf_init(&synth, 48000);
+    patch.filter.mode = mode;
+    gf_set_patch(&synth, &patch);
+    gf_note_on(&synth, note, 1);
+    gf_render(&synth, output, 6000);
+    return energy(output + 6000, 6000);
+}
+
+static void resonant_filter(void)
+{
+    GF_Patch patch = gf_default_patch();
+    patch.wave_a = patch.wave_b = GF_SINE;
+    patch.fm = patch.motion = patch.echo = patch.color = 0;
+    patch.attack = patch.decay = 0;
+    patch.sustain = 1;
+    patch.filter.resonance = 2;
+    CHECK(filtered_tone(patch, GF_FILTER_LOW, 48) > 4 * filtered_tone(patch, GF_FILTER_LOW, 84));
+    CHECK(filtered_tone(patch, GF_FILTER_BAND, 48) > 4 * filtered_tone(patch, GF_FILTER_BAND, 84));
+    CHECK(filtered_tone(patch, GF_FILTER_HIGH, 84) > 3 * filtered_tone(patch, GF_FILTER_HIGH, 24));
+
+    gf_init(&synth, 8000);
+    patch.filter.mode = GF_FILTER_LOW;
+    patch.filter.envelope = (GF_ADSR){.005f, .010f, .25f, .005f};
+    patch.filter.depth = 2;
+    patch.filter.velocity = .75f;
+    patch.filter.keytrack = .50f;
+    patch.filter.resonance = 12;
+    gf_set_patch(&synth, &patch);
+    gf_note_on(&synth, 60, .2f);
+    gf_note_on(&synth, 72, .9f);
+    gf_render(&synth, output, 40);
+    CHECK(synth.voices[0].filter_env.level > .99f);
+    CHECK(synth.voices[1].filter_g > synth.voices[0].filter_g);
+    gf_render(&synth, output, 150);
+    CHECK(synth.voices[0].filter_env.stage == GF_SUSTAIN);
+    gf_note_off(&synth, 60);
+    gf_render(&synth, output, 80);
+    CHECK(synth.voices[0].filter_env.stage == GF_RELEASE);
+    CHECK(synth.voices[0].filter_env.level == 0);
+    CHECK(synth.voices[1].filter_env.stage == GF_SUSTAIN);
+    gf_control(&synth, GF_COLOR, 1);
+    gf_note_on(&synth, 127, 1);
+    gf_render(&synth, output, 8000);
+    CHECK(energy(output, 16000) > 1);
+}
+
+static void modulation_matrix(void)
+{
+    GF_Patch patch = gf_default_patch();
+    patch.shape = (GF_Shape){.segments = {{.005f, 1}, {.005f, -1}}, .count = 2, .loop = 1};
+    patch.routes[0] = (GF_ModRoute){GF_MOD_VELOCITY, GF_MOD_PITCH, 8};
+    patch.routes[1] = (GF_ModRoute){GF_MOD_COLOR, GF_MOD_BLEND, .4f};
+    patch.routes[2] = (GF_ModRoute){GF_MOD_SHAPE, GF_MOD_BLEND, .2f};
+    patch.route_count = 3;
+    gf_init(&synth, 8000);
+    gf_set_patch(&synth, &patch);
+    gf_note_on(&synth, 72, .75f);
+    GF_Voice *voice = &synth.voices[0];
+    gf_render(&synth, output, 1);
+    CHECK(fabsf(voice->pitch_ratio - sqrtf(2)) < 1e-5f);
+    CHECK(voice->modulation[GF_MOD_BLEND] > patch.color * .4f);
+    gf_render(&synth, output, 39);
+    CHECK(voice->shape_level == 1);
+    gf_render(&synth, output, 40);
+    CHECK(voice->shape_level == -1);
+    gf_render(&synth, output, 20);
+    CHECK(fabsf(voice->shape_level) < 1e-5f);
+    gf_note_off(&synth, 72);
+    gf_render(&synth, output, 100);
+    CHECK(voice->shape_level == -1 && voice->amp.stage == GF_RELEASE);
+
+    patch.shape.loop = 0;
+    gf_set_patch(&synth, &patch);
+    gf_note_on(&synth, 60, 1);
+    gf_render(&synth, output, 200);
+    CHECK(voice->shape_level == -1 && voice->shape_index == 2);
+}
+
+static void granular_sample(void)
+{
+    const float sample[] = {.8f, .55f, .3f, -.24f, -.6f, -.27f, .36f};
+    GF_Patch patch = gf_default_patch();
+    patch.wave_a = patch.wave_b = (GF_Wave)99;
+    patch.attack = patch.decay = patch.release = patch.echo = 0;
+    patch.sustain = patch.sample = 1;
+    patch.grain = (GF_Granular){.24f, 100, 1, 0};
+    gf_init(&synth, 8000);
+    gf_set_patch(&synth, &patch);
+    gf_set_sample(&synth, sample, sizeof(sample) / sizeof(*sample));
+    gf_note_on(&synth, 60, 1);
+    gf_render(&synth, output, 1700);
+    CHECK(synth.grain_size == 1920 && synth.grain_interval == 240);
+    CHECK(energy(output + 2400, 1000) > 1);
+    for (size_t i = 0; i < GF_GRAINS; ++i) CHECK(synth.voices[0].grains[i].remaining);
+    gf_note_off(&synth, 60);
+    gf_render(&synth, output, 2);
+    CHECK(gf_active_voices(&synth) == 0);
+
+    patch.grain = (GF_Granular){.08f, 31, .40f, .32f};
+    patch.routes[0] = (GF_ModRoute){GF_MOD_LFO, GF_MOD_POSITION, .3f};
+    patch.route_count = 1;
+    patch.filter.mode = GF_FILTER_BAND;
+    float reference[512];
+    gf_init(&synth, 8000);
+    gf_set_patch(&synth, &patch);
+    gf_set_sample(&synth, sample, sizeof(sample) / sizeof(*sample));
+    gf_note_on(&synth, 72, 1);
+    gf_render(&synth, reference, 256);
+    CHECK(energy(reference, 512) > .01f);
+    gf_init(&synth, 8000);
+    gf_set_patch(&synth, &patch);
+    gf_set_sample(&synth, sample, sizeof(sample) / sizeof(*sample));
+    gf_note_on(&synth, 72, 1);
+    gf_render(&synth, output, 43);
+    gf_render(&synth, output + 86, 213);
+    CHECK(memcmp(output, reference, sizeof(reference)) == 0);
 }
 
 static void factory_presets(const GF_Bank *bank)
@@ -155,6 +275,9 @@ static void lua_bank(const char *asset)
     CHECK(strcmp(bank.patches[0].sample_file, "canopy.wav") == 0);
     CHECK(bank.patches[4].detune == -1200);
     CHECK(bank.patches[3].wave_b == GF_NOISE);
+    CHECK(bank.patches[0].filter.mode == GF_FILTER_LOW && bank.patches[0].shape.loop);
+    CHECK(bank.patches[2].filter.mode == GF_FILTER_BAND);
+    CHECK(bank.patches[3].grain.density == 31 && bank.patches[3].route_count == 2);
     CHECK(strcmp(bank.patches[99].name, "Blacklight") == 0);
     CHECK(strcmp(bank.scenes[0].mesh, GF_DEFAULT_MESH) == 0);
     CHECK(strcmp(bank.scenes[99].mesh, "helix.obj") == 0);
@@ -167,7 +290,7 @@ static void lua_bank(const char *asset)
         {"return {}", "1 to 100"},
         {"local bank = {}; for i = 1, 101 do bank[i] = {} end; return bank", "1 to 100"},
         {"return {3}", "patch 1"},
-        {"return {{wave_a='no-such-wave'}}", "unrecognized waveform"},
+        {"return {{wave_a='no-such-wave'}}", "unrecognized value for wave_a"},
         {"return {{name=2}}", "nonempty text"},
         {"return {{name=''}}", "nonempty text"},
         {"return {{name='a\\0b'}}", "nonempty text"},
@@ -177,6 +300,19 @@ static void lua_bank(const char *asset)
         {"return {{attack=-.01}}", "allowed range"},
         {"return {{color=0/0}}", "allowed range"},
         {"return {{sample_file='../sample.wav'}}", "must be a filename"},
+        {"return {{filter=5}}", "filter must be a table"},
+        {"return {{filter={mode='notch'}}}", "unrecognized value for mode"},
+        {"return {{filter={resonance=20}}}", "resonance is outside"},
+        {"return {{mod={0}}}", "each mod route must be a table"},
+        {"return {{mod={{}}}}", "unrecognized value for source"},
+        {"return {{mod={{source='lfo', destination='volume'}}}}", "unrecognized value for destination"},
+        {"local r = {}; for i=1,9 do r[i] = {} end; return {{mod=r}}", "mod accepts at most"},
+        {"return {{shape={}}}", "shape needs 1 to"},
+        {"local r = {}; for i=1,9 do r[i] = {} end; return {{shape=r}}", "shape needs 1 to"},
+        {"return {{shape={loop=2, {}}}}", "loop must be boolean"},
+        {"return {{shape={4}}}", "each shape segment must be a table"},
+        {"return {{shape={{time=0}}}}", "time is outside"},
+        {"return {{grain={}}}", "grain requires a sample_file"},
         {"return {{scene=5}}", "scene must be a table"},
         {"return {{scene={mesh='../prism.obj'}}}", "scene mesh must be an .obj filename"},
         {"return {{scene={mesh='prism'}}}", "scene mesh must be an .obj filename"},
@@ -204,6 +340,8 @@ static void lua_bank(const char *asset)
     CHECK(gf_bank_parse(valid, sizeof(valid) - 1, &bank, error, 0));
     CHECK(bank.count == 2 && bank.patches[0].morph == .5f);
     CHECK(bank.patches[1].wave_a == GF_TRIANGLE);
+    CHECK(bank.patches[1].filter.mode == GF_FILTER_LEGACY);
+    CHECK(bank.patches[1].route_count == 0 && bank.patches[1].grain.density == 0);
     CHECK(strcmp(bank.scenes[1].mesh, GF_DEFAULT_MESH) == 0);
     CHECK(bank.scenes[1].tint == gf_default_scene().tint);
     const char partial[] = "return {{scene={tint=0x123456, satellites=0}}}";
@@ -218,6 +356,9 @@ int main(int argc, char **argv)
     synthesis();
     notes_and_controls();
     sample_and_delay();
+    resonant_filter();
+    modulation_matrix();
+    granular_sample();
     lua_bank(argv[1]);
     return 0;
 }

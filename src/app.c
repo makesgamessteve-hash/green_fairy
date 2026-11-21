@@ -113,11 +113,11 @@ static void end_note(int note)
     }
 }
 
-static void start_note(int note)
+static void start_note(int note, float velocity)
 {
     if (app.held[note]++ == 0) {
         audio_lock();
-        gf_note_on(&app.synth, note, .86f);
+        gf_note_on(&app.synth, note, velocity);
         audio_unlock();
     }
 }
@@ -223,7 +223,7 @@ static void update_note(Contact *contact, const Layout *layout, float x, float y
     if (note == contact->note) return;
     end_note(contact->note);
     contact->note = note;
-    if (note >= 0) start_note(note);
+    if (note >= 0) start_note(note, .86f);
 }
 
 static void pointer(Contact *contact, const Layout *layout, int phase, float x, float y)
@@ -338,7 +338,7 @@ static void keyboard_event(const SDL_KeyboardEvent *event)
     for (int i = 0; i < GF_KEY_COUNT; ++i)
         if (event->scancode == keys[i] && *note < 0) {
             *note = app.octave + i;
-            start_note(*note);
+            start_note(*note, (event->mod & SDL_KMOD_SHIFT) ? 1.f : .86f);
             break;
         }
 }

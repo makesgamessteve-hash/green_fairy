@@ -5,6 +5,7 @@
 #include <lualib.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void limit(lua_State *state, lua_Debug *record)
@@ -48,15 +49,108 @@ static float field(lua_State *state, const char *key, float current, float min, 
     return current;
 }
 
+static int choice(lua_State *state, const char *key, const char *const *names,
+                  size_t count, int current)
+{
+    char name[GF_NAME] = {0};
+    string_field(state, key, name, sizeof(name));
+    if (!name[0] && current >= 0) return current;
+    for (size_t i = 0; i < count; ++i)
+        if (strcmp(name, names[i]) == 0) return (int)i;
+    return luaL_error(state, "unrecognized value for %s", key);
+}
+
 static GF_Wave wave(lua_State *state, const char *key, GF_Wave current)
 {
     static const char *const names[] = {"sine", "triangle", "saw", "square", "noise"};
-    char name[GF_NAME] = {0};
-    string_field(state, key, name, sizeof(name));
-    if (!name[0]) return current;
-    for (size_t i = 0; i < sizeof(names) / sizeof(names[0]); ++i)
-        if (strcmp(name, names[i]) == 0) return (GF_Wave)i;
-    return luaL_error(state, "unrecognized waveform for %s", key);
+    return (GF_Wave)choice(state, key, names, sizeof(names) / sizeof(names[0]), current);
+}
+
+static int optional_table(lua_State *state, const char *key)
+{
+    if (lua_getfield(state, -1, key) == LUA_TNIL) {
+        lua_pop(state, 1);
+        return 0;
+    }
+    if (!lua_istable(state, -1)) luaL_error(state, "%s must be a table", key);
+    return 1;
+}
+
+static void read_filter(lua_State *state, GF_Filter *filter)
+{
+    if (!optional_table(state, "filter")) return;
+    static const char *const modes[] = {"legacy", "lowpass", "bandpass", "highpass"};
+    filter->mode = (GF_FilterMode)choice(state, "mode", modes, 4, GF_FILTER_LOW);
+    filter->resonance = field(state, "resonance", filter->resonance, .5f, 12);
+    filter->depth = field(state, "depth", 0, -8, 8);
+    filter->velocity = field(state, "velocity", 0, -4, 4);
+    filter->keytrack = field(state, "keytrack", 0, -2, 2);
+    GF_ADSR *env = &filter->envelope;
+    env->attack = field(state, "attack", env->attack, 0, 10);
+    env->decay = field(state, "decay", env->decay, 0, 10);
+    env->sustain = field(state, "sustain", env->sustain, 0, 1);
+    env->release = field(state, "release", env->release, 0, 20);
+    lua_pop(state, 1);
+}
+
+static void read_routes(lua_State *state, GF_Patch *patch)
+{
+    if (!optional_table(state, "mod")) return;
+    static const char *const sources[GF_MOD_SOURCES] = {
+        "lfo", "amp_env", "filter_env", "shape", "velocity", "key", "color", "morph", "echo"
+    };
+    static const char *const destinations[GF_MOD_DESTINATIONS] = {
+        "cutoff", "pitch", "morph", "fm", "sample", "grain_position"
+    };
+    const size_t count = lua_rawlen(state, -1);
+    if (count > GF_MOD_ROUTES) luaL_error(state, "mod accepts at most %d routes", GF_MOD_ROUTES);
+    patch->route_count = (unsigned)count;
+    for (unsigned i = 0; i < patch->route_count; ++i) {
+        lua_rawgeti(state, -1, i + 1);
+        if (!lua_istable(state, -1)) luaL_error(state, "each mod route must be a table");
+        patch->routes[i] = (GF_ModRoute){
+            .source = (GF_ModSource)choice(state, "source", sources, GF_MOD_SOURCES, -1),
+            .destination = (GF_ModDestination)choice(state, "destination", destinations, GF_MOD_DESTINATIONS, -1),
+            .amount = field(state, "amount", 0, -24, 24)
+        };
+        lua_pop(state, 1);
+    }
+    lua_pop(state, 1);
+}
+
+static void read_shape(lua_State *state, GF_Shape *shape)
+{
+    if (!optional_table(state, "shape")) return;
+    const size_t count = lua_rawlen(state, -1);
+    if (!count || count > GF_SEGMENTS) luaL_error(state, "shape needs 1 to %d segments", GF_SEGMENTS);
+    shape->count = (unsigned)count;
+    const int loop_type = lua_getfield(state, -1, "loop");
+    if (loop_type != LUA_TNIL && loop_type != LUA_TBOOLEAN) luaL_error(state, "loop must be boolean");
+    shape->loop = lua_toboolean(state, -1);
+    lua_pop(state, 1);
+    for (unsigned i = 0; i < shape->count; ++i) {
+        lua_rawgeti(state, -1, i + 1);
+        if (!lua_istable(state, -1)) luaL_error(state, "each shape segment must be a table");
+        shape->segments[i] = (GF_Segment){
+            .time = field(state, "time", .5f, .005f, 20),
+            .level = field(state, "level", 0, -1, 1)
+        };
+        lua_pop(state, 1);
+    }
+    lua_pop(state, 1);
+}
+
+static void read_grain(lua_State *state, GF_Patch *patch)
+{
+    if (!optional_table(state, "grain")) return;
+    if (!patch->sample_file[0]) luaL_error(state, "grain requires a sample_file");
+    patch->grain = (GF_Granular){
+        .size = field(state, "size", .12f, .015f, .24f),
+        .density = field(state, "density", 24, 2, 100),
+        .position = field(state, "position", patch->grain.position, 0, 1),
+        .spray = field(state, "spray", .08f, 0, 1)
+    };
+    lua_pop(state, 1);
 }
 
 static int basename_only(const char *name)
@@ -85,6 +179,10 @@ static void read_patch(lua_State *state, GF_Patch *p)
     p->lfo = field(state, "lfo", p->lfo, 0, 20);
     p->motion = field(state, "motion", p->motion, 0, 1);
     p->sample = field(state, "sample", p->sample, 0, 1);
+    read_filter(state, &p->filter);
+    read_shape(state, &p->shape);
+    read_routes(state, p);
+    read_grain(state, p);
 }
 
 GF_Scene gf_default_scene(void)
@@ -157,16 +255,23 @@ int gf_bank_parse(const char *source, size_t length, GF_Bank *bank, char *error,
     if (!source) return report(error, size, "no Lua source");
     lua_State *state = luaL_newstate();
     if (!state) return report(error, size, "could not initialize Lua");
-    BankSource input = {.source = source, .length = length};
+    BankSource *input = calloc(1, sizeof(*input));
+    if (!input) {
+        lua_close(state);
+        return report(error, size, "could not allocate a patch bank");
+    }
+    input->source = source;
+    input->length = length;
     lua_pushcfunction(state, execute_bank);
-    lua_pushlightuserdata(state, &input);
+    lua_pushlightuserdata(state, input);
     const int ok = lua_pcall(state, 1, 0, 0) == LUA_OK;
     if (ok) {
-        *bank = input.bank;
+        *bank = input->bank;
         if (error && size) error[0] = '\0';
     } else {
         report(error, size, lua_tostring(state, -1));
     }
     lua_close(state);
+    free(input);
     return ok;
 }
