@@ -33,7 +33,7 @@ cmake --build build --config Release --parallel
 cmake --install build --config Release --prefix dist
 ```
 
-Run `dist/green-fairy` on Linux, `dist/green-fairy.exe` on Windows, or `dist/green-fairy.app` on macOS. Desktop requires OpenGL 3.3 with a core profile.
+Run `dist/green-fairy` on Linux, `dist/green-fairy.exe` on Windows, or `dist/green-fairy.app` on macOS. Desktop requires OpenGL 3.2 with a core profile.
 
 ### Web and WebXR
 

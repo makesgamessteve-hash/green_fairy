@@ -280,7 +280,12 @@ static void keyboard(const Layout *l, const PanelView *v)
     const Rect shelf = {l->scene.x, k.y - 37, l->width - l->scene.x * 2, k.h + 46};
     instrument_panel(shelf);
     text(k.x + 1, k.y - 26, 14, ink(0xb8c9aa), l->touch ? "TOUCH KEYS" : "PLAY KEYS");
-    const char *help = l->touch ? "TAP OR SLIDE" : "A-K TO PLAY   /   Z-X OCTAVE   /   R RELOAD";
+#ifdef __EMSCRIPTEN__
+    const char *keys_help = "A-K TO PLAY   /   Z-X OCTAVE";
+#else
+    const char *keys_help = "A-K TO PLAY   /   Z-X OCTAVE   /   R RELOAD";
+#endif
+    const char *help = l->touch ? "TAP OR SLIDE" : keys_help;
     text(k.x + k.w - text_width(12, help), k.y - 25, 12, ink(0x9aafa1), help);
     for (int i = 0; i < GF_WHITE_COUNT; ++i) key(l, v, whites[i], false);
     for (int i = 0; i < 5; ++i) key(l, v, blacks[i], true);

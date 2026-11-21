@@ -34,6 +34,7 @@
     X(void, GetShaderInfoLog, (GLuint shader, GLsizei max, GLsizei *len, GLchar *info)) \
     X(GLuint, CreateProgram, (void)) X(void, DeleteProgram, (GLuint program)) \
     X(void, AttachShader, (GLuint program, GLuint shader)) X(void, LinkProgram, (GLuint program)) \
+    X(void, BindAttribLocation, (GLuint program, GLuint index, const GLchar *name)) \
     X(void, GetProgramiv, (GLuint program, GLenum name, GLint *value)) \
     X(void, GetProgramInfoLog, (GLuint program, GLsizei max, GLsizei *len, GLchar *info)) \
     X(void, UseProgram, (GLuint program)) \
@@ -114,11 +115,10 @@ bool draw_init(const char *atlas_path)
 #ifdef __EMSCRIPTEN__
 #define SHADER_VERSION "#version 300 es\nprecision mediump float;\n"
 #else
-#define SHADER_VERSION "#version 330 core\n"
+#define SHADER_VERSION "#version 150\n"
 #endif
     const char *vertex_source = SHADER_VERSION
-        "layout(location=0) in vec2 point; layout(location=1) in vec2 uv;"
-        "layout(location=2) in vec4 tint; uniform mat4 projection;"
+        "in vec2 point; in vec2 uv; in vec4 tint; uniform mat4 projection;"
         "out vec2 st; out vec4 color;"
         "void main(){ st=uv; color=tint; gl_Position=projection*vec4(point,0.,1.); }";
     const char *fragment_source = SHADER_VERSION
@@ -131,6 +131,9 @@ bool draw_init(const char *atlas_path)
         program = gl(CreateProgram)();
         gl(AttachShader)(program, vertex);
         gl(AttachShader)(program, fragment);
+        gl(BindAttribLocation)(program, 0, "point");
+        gl(BindAttribLocation)(program, 1, "uv");
+        gl(BindAttribLocation)(program, 2, "tint");
         gl(LinkProgram)(program);
     }
     if (vertex) gl(DeleteShader)(vertex);
