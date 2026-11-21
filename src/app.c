@@ -24,7 +24,8 @@ typedef struct {
     SDL_AudioStream *audio;
     GF_Synth synth;
     GF_Bank bank;
-    Mesh mesh;
+    Mesh prism, custom_mesh;
+    const Mesh *scene_mesh;
     Layout layout;
     Contact touch[CONTACT_COUNT], mouse, xr[CONTACT_COUNT];
     unsigned held[GF_NOTES];
@@ -36,7 +37,7 @@ typedef struct {
     float zoom, offset_x, offset_y;
     float peak;
     size_t voices;
-    Uint64 started;
+    Uint64 scene_started;
     const char *base;
     char status[256];
     bool ready, running, coarse, immersed, vsync, graphics_suspended;
@@ -146,11 +147,25 @@ static void select_patch(size_t index)
     release_input();
     app.selected = index;
     const GF_Patch *patch = &app.bank.patches[index];
+    const GF_Scene *scene = &app.bank.scenes[index];
+    app.scene_started = SDL_GetTicks();
+    app.scene_mesh = &app.prism;
+    bool valid_scene = true;
+    if (strcmp(scene->mesh, GF_DEFAULT_MESH) != 0) {
+        char path[4096];
+        asset_path(path, sizeof(path), "graphics", scene->mesh);
+        valid_scene = mesh_load(&app.custom_mesh, path);
+        if (valid_scene) app.scene_mesh = &app.custom_mesh;
+    }
     size_t length = 0;
     float *sample = load_sample(patch->sample_file, &length);
     if (patch->sample_file[0] && !sample) {
         char message[80];
         SDL_snprintf(message, sizeof(message), "Could not load WAV: %s", patch->sample_file);
+        status(message);
+    } else if (!valid_scene) {
+        char message[80];
+        SDL_snprintf(message, sizeof(message), "Using prism fallback for %s", scene->mesh);
         status(message);
     } else if (app.audio) status("");
     else status("Audio device unavailable");
@@ -374,9 +389,10 @@ static PanelView view(void)
     app.voices = gf_active_voices(&app.synth);
     audio_unlock();
     return (PanelView){
-        .bank = &app.bank, .mesh = &app.mesh, .selected = app.selected, .octave = app.octave,
+        .bank = &app.bank, .mesh = app.scene_mesh, .prism = &app.prism,
+        .selected = app.selected, .octave = app.octave,
         .voices = app.voices, .held = app.held, .controls = app.controls, .peak = app.peak,
-        .time = (SDL_GetTicks() - app.started) / 1000.f, .status = app.status
+        .time = (SDL_GetTicks() - app.scene_started) / 1000.f, .status = app.status
     };
 }
 
@@ -436,8 +452,8 @@ static bool initialize(void)
     char path[4096];
     asset_path(path, sizeof(path), "graphics", "studio.bmp");
     if (!draw_init(path)) return false;
-    asset_path(path, sizeof(path), "graphics", "prism.obj");
-    if (!mesh_load(&app.mesh, path)) return SDL_SetError("Invalid prism mesh: %s", path);
+    asset_path(path, sizeof(path), "graphics", GF_DEFAULT_MESH);
+    if (!mesh_load(&app.prism, path)) return SDL_SetError("Invalid prism mesh: %s", path);
 
     gf_init(&app.synth, AUDIO_RATE);
     if (use_audio) {
@@ -450,10 +466,12 @@ static bool initialize(void)
     for (int i = 0; i < SDL_SCANCODE_COUNT; ++i) app.key_note[i] = -1;
     if (!reload_bank()) {
         app.bank.patches[0] = gf_default_patch();
+        app.bank.scenes[0] = gf_default_scene();
         app.bank.count = 1;
+        app.scene_mesh = &app.prism;
+        app.scene_started = SDL_GetTicks();
     }
     resize();
-    app.started = SDL_GetTicks();
     app.ready = app.running = true;
     return true;
 }
@@ -562,7 +580,12 @@ EMSCRIPTEN_KEEPALIVE void gf_xr_draw(int x, int y, int width, int height)
 #else
 static bool smoke_test(void)
 {
-    if (app.bank.count != GF_PATCHES || !app.sample || !app.audio || app.mesh.face_count == 0) return false;
+    if (app.bank.count != GF_PATCHES || !app.sample || !app.audio || !app.prism.face_count) return false;
+    for (size_t i = 0; i < app.bank.count; ++i) {
+        select_patch(i);
+        if (app.status[0] || !app.scene_mesh->face_count) return false;
+    }
+    select_patch(0);
     SDL_Event press = {0};
     press.key.type = SDL_EVENT_KEY_DOWN;
     press.key.down = true;

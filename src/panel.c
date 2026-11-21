@@ -135,58 +135,75 @@ static void ellipse(float x, float y, float a, float b, float tilt, Color color)
 static void visualizer(const Layout *l, const PanelView *v)
 {
     const Rect r = l->scene;
-    const float cx = r.x + r.w * .52f, cy = r.y + r.h * .50f;
-    const float scale = r.h * .245f;
-    const float orbit = r.h * .38f;
+    const GF_Scene *scene = &v->bank->scenes[v->selected];
+    const Color tint = ink(scene->tint), accent = ink(scene->accent);
+    const Color highlight = blend(accent, ink(0xe8efd9), .22f);
+    const Color field_top = blend(ink(0x080f17), tint, .08f);
+    const Color field_bottom = blend(ink(0x101c24), tint, .17f);
+    const Color grid = blend(field_bottom, accent, .17f);
+    const float cx = r.x + r.w * .51f, cy = r.y + r.h * .47f;
+    const float scale = r.h * .215f;
+    const float orbit = fminf(r.w * .30f, r.h * .40f) * (.89f + v->controls[GF_ECHO] * .20f);
     const float bottom = r.y + r.h - 41;
-    const float horizon = r.y + r.h * .75f;
-    const Color grid = ink(0x263b2b), highlight = ink(0xcce77e);
-    shade(r, ink(0x0b1517), ink(0x142720));
+    const float horizon = r.y + r.h * .74f;
+    shade(r, field_top, field_bottom);
     for (int i = -8; i <= 8; ++i) {
         const float x = r.x + 10 + (i + 8) * (r.w - 20) / 16;
         line(cx + (x - cx) * .25f, horizon, x, bottom, 1, grid);
     }
     for (int i = 0; i < 7; ++i) {
         const float progress = i / 6.f;
-        const float y = horizon + (bottom-horizon) * progress * progress;
+        const float y = horizon + (bottom - horizon) * progress * progress;
         line(r.x + 10, y, r.x + r.w - 10, y, 1, grid);
     }
     for (unsigned i = 0; i < 55; ++i) {
-        const unsigned hash = (i + 1) * 0x9e3779b9u;
+        const unsigned hash = (i + 1) * 0x9e3779b9u ^ (scene->tint * 0x85ebca6bu);
         const float sx = r.x + 15 + (r.w - 30) * ((hash >> 8) & 1023) / 1024.f;
-        const float sy = r.y + 42 + (r.h - 102) * ((hash >> 21) & 1023) / 1024.f;
-        const float twinkle = .27f + .17f * sinf(v->time * 1.1f + i * 1.5f);
-        const float size = i % 7 == 0 ? 11 : 2;
+        const float sy = r.y + 38 + (r.h - 99) * ((hash >> 21) & 1023) / 1024.f;
+        const float twinkle = .29f + .20f * sinf(v->time * 1.1f + i * 1.5f);
+        const float size = i % 7 == 0 ? 9 : 2;
         sprite((Rect){sx, sy, size, size}, i % 7 == 0 ? 1 : 2, alpha(highlight, twinkle));
     }
-    ellipse(cx, cy + 3, orbit, orbit * .33f, -.30f, ink(0x5b7448));
-    ellipse(cx, cy, orbit * 1.27f, orbit * .43f, -.30f, ink(0x344537));
-    ellipse(cx, cy + 3, orbit * .80f, orbit * .29f, .43f, ink(0x4b633c));
-    const float floating = 5 * sinf(v->time * 1.2f);
-    mesh_draw(v->mesh, cx, cy + floating, scale * (1 + v->peak * .13f),
-              v->time * .48f, blend(ink(0x8eb861), highlight, .33f + v->peak * .45f));
-    for (int i = 0; i < 3; ++i) {
-        const float a = v->time * (.33f + .04f * i) + i * 2.0943951f;
-        const float x = cx + orbit * (1.10f + i * .08f) * cosf(a);
-        const float y = cy + orbit * (.36f * sinf(a) - .26f * cosf(a));
-        mesh_draw(v->mesh, x, y, scale * (.11f + .025f * i), a * 1.75f, ink(0xa6bf73));
+
+    const float ring_tilt = -.18f - scene->tilt * .70f;
+    ellipse(cx, cy, orbit * 1.25f, orbit * .43f, ring_tilt, blend(field_bottom, tint, .28f));
+    ellipse(cx, cy + 3, orbit, orbit * .34f, ring_tilt, blend(field_bottom, accent, .51f));
+    ellipse(cx, cy + 3, orbit * .80f, orbit * .29f, -ring_tilt + .18f,
+            blend(field_bottom, accent, .32f));
+
+    const float time = v->time;
+    const float pulse = sqrtf(fminf(1, v->peak));
+    const float floating = (3 + 4 * v->controls[GF_MORPH]) * sinf(time * 1.2f);
+    const MeshPose pose = {
+        .yaw = time * scene->spin + .35f,
+        .tilt = scene->tilt + .10f * sinf(time * .81f),
+        .aspect = scene->aspect
+    };
+    const Color body = blend(tint, highlight, .09f + .16f * v->controls[GF_COLOR] + .27f * pulse);
+    mesh_draw(v->mesh, cx, cy + floating, scale * (1 + pulse * .16f), pose, body, highlight);
+    for (unsigned i = 0; i < scene->satellites; ++i) {
+        const float phase = time * (.28f + .16f * scene->spin) + i * 6.2831853f / scene->satellites;
+        const float x = cx + orbit * (1.06f + (i % 3) * .07f) * cosf(phase);
+        const float y = cy + orbit * (.34f * sinf(phase) + .66f * ring_tilt * cosf(phase));
+        const MeshPose fragment = {phase * 1.75f, -scene->tilt, .84f};
+        mesh_draw(v->prism, x, y, scale * (.095f + (i % 3) * .023f), fragment, accent, highlight);
     }
     for (int i = 0; i < (int)r.h / 5; ++i)
         box((Rect){r.x + 2, r.y + i*5 + 2, r.w - 4, 1}, alpha(ink(0x07130f), .29f));
-    frame(r, ink(0x455a45));
+    frame(r, blend(field_bottom, accent, .31f));
     const float pad = l->touch ? 12 : 17;
     sprite((Rect){r.x + pad, r.y + 16, 8, 8}, 2, highlight);
     text(r.x + pad + 15, r.y + 11, 15, ink(0xb5c6ab), "SIGNAL FIELD");
     text(r.x + r.w - pad - 59, r.y + 11, 13, ink(0x789485), "STEREO");
-    box((Rect){r.x + 1, bottom, r.w - 2, 40}, ink(0x13211d));
-    box((Rect){r.x + 1, bottom, r.w - 2, 1}, ink(0x334637));
+    box((Rect){r.x + 1, bottom, r.w - 2, 40}, field_bottom);
+    box((Rect){r.x + 1, bottom, r.w - 2, 1}, grid);
     text(r.x + pad, bottom + 13, 13, ink(0xb0bd9d), "OUTPUT");
     const int bars = l->touch ? 15 : 24;
     const float step = l->touch ? 11 : 15;
     const float gain = sqrtf(fminf(1, v->peak));
     for (int i = 0; i < bars; ++i) {
         const bool lit = i + .4f < gain * bars;
-        const Color c = lit ? ink(i > bars * .78f ? 0xeac078 : 0xc4dd75) : ink(0x2b3e34);
+        const Color c = lit ? (i > bars * .78f ? ink(0xeac078) : highlight) : grid;
         box((Rect){r.x + pad + 59 + i * step, bottom + 15, step - 3, 8}, c);
     }
     char voice[24];
@@ -204,7 +221,8 @@ static void button(Rect r, const char *label)
 static void patches(const Layout *layout, const PanelView *v)
 {
     const Rect r = layout->bank;
-    const Color highlighted = ink(0xd4e986), pale = ink(0xe5ead2), muted = ink(0x9fb2a3);
+    const Color highlighted = blend(ink(v->bank->scenes[v->selected].accent), ink(0xe5ead2), .32f);
+    const Color pale = ink(0xe5ead2), muted = ink(0x9fb2a3);
     const char *name = v->bank->patches[v->selected].name;
     instrument_panel(r);
     button(layout->jump_back, "<<");
@@ -229,7 +247,7 @@ static void patches(const Layout *layout, const PanelView *v)
             const size_t index = first + row;
             const Rect p = panel_patch_row(layout, row);
             const bool active = index == v->selected;
-            box(p, ink(active ? 0x34482f : 0x14221d));
+            box(p, active ? blend(ink(0x182820), highlighted, .17f) : ink(0x14221d));
             frame(p, ink(active ? 0x667955 : 0x293a31));
             if (active) box((Rect){p.x, p.y, 3, p.h}, highlighted);
             char number[12];
@@ -243,7 +261,7 @@ static void patches(const Layout *layout, const PanelView *v)
 
 static void parameters(const Layout *l, const PanelView *v)
 {
-    const Color accent = ink(0xd2e984);
+    const Color accent = blend(ink(v->bank->scenes[v->selected].accent), ink(0xe5ead2), .27f);
     for (int i = 0; i < GF_CONTROL_COUNT; ++i) {
         const Rect r = l->controls[i], t = panel_track(l, i);
         instrument_panel(r);
@@ -260,7 +278,7 @@ static void parameters(const Layout *l, const PanelView *v)
         box(t, ink(0x0b1713));
         frame(t, ink(0x455a48));
         const float progress = t.w * v->controls[i];
-        box((Rect){t.x, t.y, progress, t.h}, ink(0x8da958));
+        box((Rect){t.x, t.y, progress, t.h}, blend(ink(0x354a3c), accent, .62f));
         box((Rect){t.x + progress - 4, t.y - 6, 8, t.h + 12}, accent);
     }
 }

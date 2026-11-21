@@ -59,14 +59,17 @@ static GF_Wave wave(lua_State *state, const char *key, GF_Wave current)
     return luaL_error(state, "unrecognized waveform for %s", key);
 }
 
+static int basename_only(const char *name)
+{
+    return strspn(name, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.") == strlen(name);
+}
+
 static void read_patch(lua_State *state, GF_Patch *p)
 {
     *p = gf_default_patch();
     string_field(state, "name", p->name, sizeof(p->name));
     string_field(state, "sample_file", p->sample_file, sizeof(p->sample_file));
-    if (p->sample_file[0] &&
-        strspn(p->sample_file, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.") !=
-        strlen(p->sample_file))
+    if (!basename_only(p->sample_file))
         luaL_error(state, "sample_file must be a filename in assets/sounds");
     p->wave_a = wave(state, "wave_a", p->wave_a);
     p->wave_b = wave(state, "wave_b", p->wave_b);
@@ -82,6 +85,40 @@ static void read_patch(lua_State *state, GF_Patch *p)
     p->lfo = field(state, "lfo", p->lfo, 0, 20);
     p->motion = field(state, "motion", p->motion, 0, 1);
     p->sample = field(state, "sample", p->sample, 0, 1);
+}
+
+GF_Scene gf_default_scene(void)
+{
+    return (GF_Scene){
+        .mesh = GF_DEFAULT_MESH, .tint = 0x8eb861, .accent = 0xcce77e,
+        .spin = .48f, .tilt = .17f, .aspect = 1, .satellites = 3
+    };
+}
+
+static uint32_t integer_field(lua_State *state, const char *key, uint32_t current, uint32_t max)
+{
+    const float number = field(state, key, (float)current, 0, (float)max);
+    if (floorf(number) != number) luaL_error(state, "%s must be an integer", key);
+    return (uint32_t)number;
+}
+
+static void read_scene(lua_State *state, GF_Scene *scene)
+{
+    *scene = gf_default_scene();
+    if (lua_getfield(state, -1, "scene") != LUA_TNIL) {
+        if (!lua_istable(state, -1)) luaL_error(state, "scene must be a table");
+        string_field(state, "mesh", scene->mesh, sizeof(scene->mesh));
+        const char *extension = strrchr(scene->mesh, '.');
+        if (!basename_only(scene->mesh) || !extension || strcmp(extension, ".obj") != 0)
+            luaL_error(state, "scene mesh must be an .obj filename in assets/graphics");
+        scene->tint = integer_field(state, "tint", scene->tint, 0xffffff);
+        scene->accent = integer_field(state, "accent", scene->accent, 0xffffff);
+        scene->spin = field(state, "spin", scene->spin, -3, 3);
+        scene->tilt = field(state, "tilt", scene->tilt, -.65f, .65f);
+        scene->aspect = field(state, "aspect", scene->aspect, .75f, 1.25f);
+        scene->satellites = integer_field(state, "satellites", scene->satellites, 5);
+    }
+    lua_pop(state, 1);
 }
 
 typedef struct {
@@ -109,6 +146,7 @@ static int execute_bank(lua_State *state)
         if (!lua_istable(state, -1))
             return luaL_error(state, "patch %d must be a table", (int)i + 1);
         read_patch(state, &bank->patches[i]);
+        read_scene(state, &bank->scenes[i]);
         lua_pop(state, 1);
     }
     return 0;

@@ -1,5 +1,6 @@
 """End-to-end checks against the served Emscripten distribution."""
 import argparse
+import base64
 import functools
 import http.server
 import shutil
@@ -34,6 +35,30 @@ def load(page, url):
     return errors
 
 
+def scene_colors(page):
+    x, y = point(page, 230, 151)
+    right, bottom = point(page, 470, 332)
+    capture = page.screenshot(clip={"x": x, "y": y, "width": right - x, "height": bottom - y})
+    return page.evaluate("""async png => {
+        const image = new Image();
+        image.src = 'data:image/png;base64,' + png;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0);
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        let green = 0, violet = 0;
+        for (let i = 0; i < pixels.length; i += 4) {
+            const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+            if (g > 70 && g > r * 1.1 && g > b * 1.2) green++;
+            if (r > 75 && b > 75 && r > g * 1.16 && b > g * 1.25) violet++;
+        }
+        return [green, violet];
+    }""", base64.b64encode(capture).decode("ascii"))
+
+
 def desktop(browser, url, screenshots):
     page = browser.new_page(viewport={"width": 1160, "height": 834})
     requests = set()
@@ -42,11 +67,14 @@ def desktop(browser, url, screenshots):
     for path in ("manifest.json", "scripts/bank.lua", "sounds/canopy.wav",
                  "graphics/studio.bmp", "graphics/prism.obj"):
         assert url + "assets/" + path in requests, path
+    assert sum(request.endswith(".obj") for request in requests) == 11
     assert page.evaluate("Module._gf_web_touch()") == 0
     assert page.evaluate("Module._gf_web_patch()") == 0
     assert .35 < page.evaluate("Module._gf_web_control(0)") < .37
     png = page.locator("#canvas").screenshot(path=screenshots / "desktop.png" if screenshots else None)
     assert len(png) > 15000, "The instrument canvas is unexpectedly blank"
+    green, violet = scene_colors(page)
+    assert green > 500 and green > 4 * violet, (green, violet)
     page.mouse.click(*point(page, 574, 581))
     page.keyboard.down("a")
     page.keyboard.down("s")
@@ -61,6 +89,10 @@ def desktop(browser, url, screenshots):
     page.wait_for_function("Module._gf_web_patch() === 0")
     page.keyboard.press("ArrowUp")
     page.wait_for_function("Module._gf_web_patch() === 99")
+    green, violet = scene_colors(page)
+    assert violet > 500 and violet > 4 * green, (green, violet)
+    if screenshots:
+        page.locator("#canvas").screenshot(path=screenshots / "blacklight.png")
     page.keyboard.down("a")
     page.wait_for_function("Module._gf_web_peak() > .012")
     page.keyboard.up("a")
@@ -133,9 +165,12 @@ def mobile(browser, url, screenshots):
 def external_assets(browser, url):
     page = browser.new_page()
     page.route("**/assets/scripts/bank.lua", lambda route: route.fulfill(
-        content_type="text/plain", body='return {{name="Browser edit", morph=.91}}'))
+        content_type="text/plain",
+        body='return {{name="Browser edit", morph=.91, scene={mesh="missing.obj"}}}'))
     load(page, url)
     page.wait_for_function("Module._gf_web_control(0) > .90")
+    green, violet = scene_colors(page)
+    assert green > 500 and green > 4 * violet, (green, violet)
     page.close()
 
     page = browser.new_page()

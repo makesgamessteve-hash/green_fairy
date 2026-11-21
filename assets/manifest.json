@@ -1,6 +1,16 @@
 [
   "graphics/studio.bmp",
+  "graphics/anvil.obj",
+  "graphics/arch.obj",
+  "graphics/bell.obj",
+  "graphics/cage.obj",
+  "graphics/fan.obj",
+  "graphics/helix.obj",
+  "graphics/kite.obj",
+  "graphics/petal.obj",
   "graphics/prism.obj",
+  "graphics/relay.obj",
+  "graphics/spire.obj",
   "scripts/bank.lua",
   "sounds/canopy.wav"
 ]

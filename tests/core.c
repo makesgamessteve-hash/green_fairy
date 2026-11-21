@@ -128,6 +128,7 @@ static void factory_presets(const GF_Bank *bank)
         for (size_t k = 0; k < 16; ++k) signatures[i][k] = output[(k + 1) * 479 * 2];
         for (size_t previous = 0; previous < i; ++previous) {
             CHECK(strcmp(patch->name, bank->patches[previous].name) != 0);
+            CHECK(bank->scenes[i].tint != bank->scenes[previous].tint);
             CHECK(memcmp(signatures[i], signatures[previous], sizeof(signatures[i])) != 0);
         }
     }
@@ -155,6 +156,9 @@ static void lua_bank(const char *asset)
     CHECK(bank.patches[4].detune == -1200);
     CHECK(bank.patches[3].wave_b == GF_NOISE);
     CHECK(strcmp(bank.patches[99].name, "Blacklight") == 0);
+    CHECK(strcmp(bank.scenes[0].mesh, GF_DEFAULT_MESH) == 0);
+    CHECK(strcmp(bank.scenes[99].mesh, "helix.obj") == 0);
+    CHECK(bank.scenes[99].tint == 0xbc70ee);
     factory_presets(&bank);
     const GF_Bank last_good = bank;
     const struct { const char *lua, *error; } invalid[] = {
@@ -173,6 +177,16 @@ static void lua_bank(const char *asset)
         {"return {{attack=-.01}}", "allowed range"},
         {"return {{color=0/0}}", "allowed range"},
         {"return {{sample_file='../sample.wav'}}", "must be a filename"},
+        {"return {{scene=5}}", "scene must be a table"},
+        {"return {{scene={mesh='../prism.obj'}}}", "scene mesh must be an .obj filename"},
+        {"return {{scene={mesh='prism'}}}", "scene mesh must be an .obj filename"},
+        {"return {{scene={mesh='prism.bmp'}}}", "scene mesh must be an .obj filename"},
+        {"return {{scene={tint=1.5}}}", "tint must be an integer"},
+        {"return {{scene={accent=0x1000000}}}", "accent is outside its allowed range"},
+        {"return {{scene={spin=4}}}", "spin is outside its allowed range"},
+        {"return {{scene={tilt=-.8}}}", "tilt is outside its allowed range"},
+        {"return {{scene={aspect=.2}}}", "aspect is outside its allowed range"},
+        {"return {{scene={satellites=6}}}", "satellites is outside its allowed range"},
         {"return {os.execute('foo')}", "nil value"},
         {"while true do end", "instruction budget"},
     };
@@ -190,6 +204,12 @@ static void lua_bank(const char *asset)
     CHECK(gf_bank_parse(valid, sizeof(valid) - 1, &bank, error, 0));
     CHECK(bank.count == 2 && bank.patches[0].morph == .5f);
     CHECK(bank.patches[1].wave_a == GF_TRIANGLE);
+    CHECK(strcmp(bank.scenes[1].mesh, GF_DEFAULT_MESH) == 0);
+    CHECK(bank.scenes[1].tint == gf_default_scene().tint);
+    const char partial[] = "return {{scene={tint=0x123456, satellites=0}}}";
+    CHECK(gf_bank_parse(partial, sizeof(partial) - 1, &bank, error, sizeof(error)));
+    CHECK(bank.scenes[0].tint == 0x123456 && bank.scenes[0].satellites == 0);
+    CHECK(strcmp(bank.scenes[0].mesh, GF_DEFAULT_MESH) == 0);
 }
 
 int main(int argc, char **argv)

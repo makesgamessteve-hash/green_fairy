@@ -14,7 +14,7 @@ typedef struct {
 
 typedef struct {
     const GF_Bank *bank;
-    const Mesh *mesh;
+    const Mesh *mesh, *prism;
     size_t selected, voices;
     int octave;
     const unsigned *held;

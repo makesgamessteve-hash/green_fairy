@@ -23,3 +23,9 @@
 
 - [x] 5.1 Expand the external Lua bank to 100 playable presets and verify the loader limit.
 - [x] 5.2 Add single-preset and ten-preset navigation to the desktop and touch layouts.
+
+## 6. Preset graphics
+
+- [x] 6.1 Define an editable 3D scene for every factory preset and package its model assets.
+- [x] 6.2 Verify scene switching and custom mesh fallback on the supported builds.
+- [x] 6.3 Document the synth components and the editable scene fields.

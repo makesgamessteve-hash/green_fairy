@@ -343,7 +343,19 @@ bool mesh_load(Mesh *mesh, const char *path)
         row = next;
     }
     SDL_free(source);
-    return valid && mesh->face_count > 0;
+    if (!valid || !mesh->face_count) return false;
+
+    float radius_squared = 1.35f * 1.35f;
+    for (size_t i = 0; i < mesh->point_count; ++i) {
+        const Point3 p = mesh->points[i];
+        radius_squared = fmaxf(radius_squared, p.x * p.x + p.y * p.y + p.z * p.z);
+    }
+    const float scale = 1.35f / sqrtf(radius_squared);
+    for (size_t i = 0; i < mesh->point_count; ++i) {
+        Point3 *p = &mesh->points[i];
+        *p = (Point3){p->x * scale, p->y * scale, p->z * scale};
+    }
+    return true;
 }
 
 typedef struct { size_t index; float depth; Color color; } Surface;
@@ -354,16 +366,20 @@ static int depth_order(const void *a, const void *b)
     return (delta > 0) - (delta < 0);
 }
 
-void mesh_draw(const Mesh *mesh, float x, float y, float scale, float angle, Color tint)
+void mesh_draw(const Mesh *mesh, float x, float y, float scale, MeshPose pose, Color tint, Color accent)
 {
     Point3 world[GF_MESH_POINTS], projected[GF_MESH_POINTS];
     Surface surfaces[GF_MESH_FACES];
-    const float sine = sinf(angle), cosine = cosf(angle);
+    const float sine = sinf(pose.yaw), cosine = cosf(pose.yaw);
+    const float bank_sine = sinf(pose.tilt), bank_cosine = cosf(pose.tilt);
+    const Color shadow = blend(ink(0x0e1a23), tint, .16f);
+    const Color lit_surface = blend(tint, accent, .19f);
     for (size_t i = 0; i < mesh->point_count; ++i) {
         const Point3 p = mesh->points[i];
-        const float a = cosine * p.x + sine * p.z;
+        const float horizontal = pose.aspect * (cosine * p.x + sine * p.z);
         const float depth = cosine * p.z - sine * p.x;
-        const Point3 rotated = {a * .985f - p.y * .17f, a * .17f + p.y * .985f, depth};
+        const Point3 rotated = {horizontal * bank_cosine - p.y * bank_sine,
+                                horizontal * bank_sine + p.y * bank_cosine, depth};
         const float perspective = scale * (5 / (5 - rotated.z));
         world[i] = rotated;
         projected[i] = (Point3){x + rotated.x * perspective, y - rotated.y * perspective, depth};
@@ -375,14 +391,14 @@ void mesh_draw(const Mesh *mesh, float x, float y, float scale, float angle, Col
         const Point3 n = {u.y*v.z - u.z*v.y, u.z*v.x - u.x*v.z, u.x*v.y - u.y*v.x};
         const float length = sqrtf(n.x*n.x + n.y*n.y + n.z*n.z);
         const float lit = length > .001f ? fabsf((-.29f*n.x + .64f*n.y + .58f*n.z) / length) : 0;
-        const Color base = blend(ink(0x142820), tint, .16f + .81f * lit);
+        const Color base = blend(shadow, lit_surface, .19f + .79f * lit);
         surfaces[i] = (Surface){i, (a.z+b.z+c.z)/3, base};
     }
     qsort(surfaces, mesh->face_count, sizeof(*surfaces), depth_order);
     for (size_t i = 0; i < mesh->face_count; ++i) {
         const unsigned *face = mesh->faces[surfaces[i].index];
         const Point3 a = projected[face[0]], b = projected[face[1]], c = projected[face[2]];
-        const Color edge = alpha(blend(surfaces[i].color, tint, .8f), .45f);
+        const Color edge = alpha(blend(surfaces[i].color, accent, .72f), .57f);
         triangle(solid(a.x, a.y, surfaces[i].color), solid(b.x, b.y, surfaces[i].color),
                  solid(c.x, c.y, surfaces[i].color));
         line(a.x, a.y, b.x, b.y, .8f, edge);

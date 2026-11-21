@@ -7,6 +7,7 @@
 typedef struct { float x, y, w, h; } Rect;
 typedef struct { float x, y, z; } Point3;
 typedef struct { float r, g, b, a; } Color;
+typedef struct { float yaw, tilt, aspect; } MeshPose;
 
 enum { GF_MESH_POINTS = 256, GF_MESH_FACES = 512 };
 typedef struct {
@@ -32,6 +33,6 @@ void text(float x, float y, float size, Color color, const char *message);
 float text_width(float size, const char *message);
 void sprite(Rect rect, int index, Color color);
 bool mesh_load(Mesh *mesh, const char *path);
-void mesh_draw(const Mesh *mesh, float x, float y, float scale, float angle, Color tint);
+void mesh_draw(const Mesh *mesh, float x, float y, float scale, MeshPose pose, Color tint, Color accent);
 
 #endif

@@ -19,8 +19,18 @@ typedef struct {
     char sample_file[GF_NAME];
 } GF_Patch;
 
+#define GF_DEFAULT_MESH "prism.obj"
+
+typedef struct {
+    char mesh[GF_NAME];
+    uint32_t tint, accent;
+    float spin, tilt, aspect;
+    unsigned satellites;
+} GF_Scene;
+
 typedef struct {
     GF_Patch patches[GF_PATCHES];
+    GF_Scene scenes[GF_PATCHES];
     size_t count;
 } GF_Bank;
 
@@ -54,6 +64,7 @@ void gf_all_notes_off(GF_Synth *synth);
 void gf_render(GF_Synth *synth, float *stereo, size_t frames);
 size_t gf_active_voices(const GF_Synth *synth);
 
+GF_Scene gf_default_scene(void);
 int gf_bank_parse(const char *source, size_t length, GF_Bank *bank, char *error, size_t error_size);
 
 #endif
