@@ -2,6 +2,8 @@
 import argparse
 import functools
 import http.server
+import shutil
+import tempfile
 import threading
 from pathlib import Path
 
@@ -152,18 +154,24 @@ def main():
     args = parser.parse_args()
     if args.screenshots:
         args.screenshots.mkdir(parents=True, exist_ok=True)
-    handler = functools.partial(Handler, directory=str(args.directory.resolve()))
+    with tempfile.TemporaryDirectory() as site_root:
+        shutil.copytree(args.directory, Path(site_root) / "green-fairy")
+        test_project_site(site_root, args.chromium, args.screenshots)
+
+
+def test_project_site(site_root, chromium, screenshots):
+    handler = functools.partial(Handler, directory=site_root)
     with http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler) as server, sync_playwright() as pw:
         threading.Thread(target=server.serve_forever, daemon=True).start()
         browser = pw.chromium.launch(
-            executable_path=args.chromium,
+            executable_path=chromium,
             args=["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
         )
-        url = f"http://127.0.0.1:{server.server_port}/"
+        url = f"http://127.0.0.1:{server.server_port}/green-fairy/"
         try:
-            desktop(browser, url, args.screenshots)
+            desktop(browser, url, screenshots)
             print("Desktop browser passed")
-            mobile(browser, url, args.screenshots)
+            mobile(browser, url, screenshots)
             print("Mobile touch passed")
             external_assets(browser, url)
             print("External assets passed")

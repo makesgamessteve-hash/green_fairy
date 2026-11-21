@@ -47,6 +47,10 @@ python3 -m http.server 8080 --directory build-web/web
 
 Open `http://localhost:8080`. Deploy the contents of `build-web/web` together. Use HTTPS or localhost for immersive WebXR.
 
+### GitHub Pages
+
+Set the repository's **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. A push to `main` or a manual **Verify** run on `main` builds the web app, runs the browser and coverage checks, and deploys the tested files. The deployment job links to the resulting site.
+
 ## Extend
 
 Edit the installed `assets/` directory alongside the executable on Windows and Linux. On macOS it lives in the app bundle under `Contents/Resources/assets/`. On the web it lives alongside `instrument.wasm`.
@@ -84,7 +88,7 @@ python3 -m playwright install chromium
 python3 tests/browser.py build-web/web
 ```
 
-The browser suite exercises desktop keyboard and pointer input, mobile touch, editable assets, and simulated stereo WebXR rendering and controller input. The OpenSpec change lives under `openspec/changes/create-green-fairy`.
+The browser suite serves the build under a GitHub Pages-style project path and exercises desktop keyboard and pointer input, mobile touch, editable assets, and simulated stereo WebXR rendering and controller input. The OpenSpec change lives under `openspec/changes/create-green-fairy`.
 
 ```sh
 npm exec --yes --package @fission-ai/openspec@2.1.1 -- openspec validate create-green-fairy --strict
