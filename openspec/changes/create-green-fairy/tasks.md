@@ -36,3 +36,9 @@
 - [x] 7.2 Add the modulation matrix, looping shape envelopes, and velocity accents.
 - [x] 7.3 Add granular playback and demonstrate the new features in factory presets.
 - [x] 7.4 Validate the DSP, Lua options, and browser playback and document the controls.
+
+## 8. Factory revoicing
+
+- [x] 8.1 Configure the advanced filter and modulation features for all 100 factory presets.
+- [x] 8.2 Add looping or granular material where it suits each sound and check audio levels across registers.
+- [x] 8.3 Verify the updated bank, its external samples, and browser playback.

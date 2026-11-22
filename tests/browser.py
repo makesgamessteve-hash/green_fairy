@@ -65,7 +65,7 @@ def desktop(browser, url, screenshots):
     page.on("response", lambda response: requests.add(response.url) if response.ok else None)
     errors = load(page, url)
     for path in ("manifest.json", "scripts/bank.lua", "sounds/canopy.wav", "sounds/orchard-air.wav",
-                 "graphics/studio.bmp", "graphics/prism.obj"):
+                 "sounds/filament.wav", "graphics/studio.bmp", "graphics/prism.obj"):
         assert url + "assets/" + path in requests, path
     assert sum(request.endswith(".obj") for request in requests) == 11
     assert page.evaluate("Module._gf_web_touch()") == 0
@@ -124,6 +124,14 @@ def desktop(browser, url, screenshots):
     page.mouse.move(*point(page, 220, 676))
     page.wait_for_function("Module._gf_web_held() === 1")
     page.mouse.up()
+    page.wait_for_function("Module._gf_web_held() === 0")
+
+    for _ in range(4):
+        page.keyboard.press("ArrowDown")
+    page.wait_for_function("Module._gf_web_patch() === 6")
+    page.keyboard.down("a")
+    page.wait_for_function("Module._gf_web_held() === 1 && Module._gf_web_peak() > .012")
+    page.keyboard.up("a")
     page.wait_for_function("Module._gf_web_held() === 0")
 
     page.evaluate("""() => {

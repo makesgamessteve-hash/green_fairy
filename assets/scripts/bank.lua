@@ -65,6 +65,12 @@ return {
         attack = .44, decay = 1.28, sustain = .74, release = 2.7,
         morph = .27, color = .68, echo = .44, detune = 13, fm = .28,
         lfo = .19, motion = .23,
+        filter = {resonance = 1.29, depth = 1.14, velocity = .65, keytrack = .46,
+                  attack = .61, decay = 1.36, sustain = .30, release = 1.84},
+        shape = {loop = true, {time = 1.25, level = .52}, {time = 1.5, level = -.58},
+                 {time = 1.05, level = .12}},
+        mod = {{source = "shape", destination = "cutoff", amount = .46},
+               {source = "lfo", destination = "pitch", amount = .08}},
         scene = {mesh = "petal.obj", tint = 0x85cf85, accent = 0xddf398, spin = -0.3, tilt = -0.53, aspect = 0.85, satellites = 5}
     },
     {
@@ -72,6 +78,13 @@ return {
         attack = 1.18, decay = 2.30, sustain = .88, release = 3.6,
         morph = .47, color = .51, echo = .55, detune = -21, fm = .62,
         lfo = .08, motion = .20,
+        filter = {resonance = .91, depth = .67, velocity = .42, keytrack = .33,
+                  attack = 1.56, decay = 2.20, sustain = .47, release = 2.90},
+        shape = {loop = true, {time = 2.2, level = .75}, {time = 3.1, level = -.55}},
+        sample = .28, sample_file = "orchard-air.wav",
+        grain = {size = .19, density = 26, position = .45, spray = .12},
+        mod = {{source = "shape", destination = "grain_position", amount = .27},
+               {source = "lfo", destination = "fm", amount = .26}},
         scene = {mesh = "prism.obj", tint = 0x66baed, accent = 0xf3de99, spin = 0.31, tilt = -0.25, aspect = 1.06, satellites = 4}
     },
     {
@@ -79,13 +92,26 @@ return {
         attack = .78, decay = 1.60, sustain = .65, release = 2.6,
         morph = .21, color = .39, echo = .63, detune = 8, fm = .36,
         lfo = .22, motion = .19,
+        filter = {resonance = 1.46, depth = 1.57, velocity = .78, keytrack = .45,
+                  attack = .96, decay = 1.63, sustain = .34, release = 2.20},
+        shape = {loop = true, {time = .86, level = .45}, {time = 1.38, level = -.68},
+                 {time = 1.15, level = .16}},
+        mod = {{source = "shape", destination = "morph", amount = .18},
+               {source = "lfo", destination = "cutoff", amount = .32}},
         scene = {mesh = "relay.obj", tint = 0xa3b759, accent = 0xffd17f, spin = 0.41, tilt = 0.3, aspect = 0.92, satellites = 2}
     },
     {
         name = "Silver Murmur", wave_a = "triangle", wave_b = "noise",
         attack = .83, decay = 1.85, sustain = .75, release = 2.2,
-        morph = .17, color = .58, echo = .35, detune = 4, fm = .82,
+        morph = .17, color = .22, echo = .35, detune = 4, fm = .82,
         lfo = .34, motion = .20,
+        filter = {mode = "bandpass", resonance = .63, depth = .69, velocity = .25, keytrack = .88,
+                  attack = 1.10, decay = 1.80, sustain = .39, release = 1.84},
+        shape = {loop = true, {time = 1.6, level = -.62}, {time = 2.1, level = .76}},
+        sample = .35, sample_file = "orchard-air.wav",
+        grain = {size = .14, density = 33, position = .55, spray = .20},
+        mod = {{source = "shape", destination = "grain_position", amount = .24},
+               {source = "lfo", destination = "morph", amount = .12}},
         scene = {mesh = "fan.obj", tint = 0xaebdc8, accent = 0xe9c5f4, spin = 0.32, tilt = -0.34, aspect = 0.88, satellites = 5}
     },
     {
@@ -103,6 +129,12 @@ return {
         attack = .62, decay = 2.10, sustain = .70, release = 2.8,
         morph = .33, color = .59, echo = .41, detune = -16, fm = .17,
         lfo = .28, motion = .26,
+        filter = {resonance = 1.12, depth = 1.03, velocity = .45, keytrack = .42,
+                  attack = .89, decay = 2.0, sustain = .34, release = 2.10},
+        shape = {loop = true, {time = 1.46, level = .65}, {time = 1.30, level = -.57},
+                 {time = .9, level = .16}},
+        mod = {{source = "shape", destination = "cutoff", amount = .52},
+               {source = "velocity", destination = "fm", amount = .26}},
         scene = {mesh = "helix.obj", tint = 0xc8756e, accent = 0xffd37d, spin = 0.38, tilt = -0.4, aspect = 1.11, satellites = 4}
     },
     {
@@ -110,6 +142,13 @@ return {
         attack = 1.51, decay = 2.50, sustain = .57, release = 4.8,
         morph = .31, color = .37, echo = .77, detune = -11, fm = 1.15,
         lfo = .14, motion = .31,
+        filter = {resonance = 1.07, depth = .92, velocity = .38, keytrack = .52,
+                  attack = 1.86, decay = 2.35, sustain = .54, release = 3.35},
+        shape = {loop = true, {time = 2.4, level = .84}, {time = 3.0, level = -.65}},
+        sample = .32, sample_file = "filament.wav",
+        grain = {size = .21, density = 25, position = .48, spray = .17},
+        mod = {{source = "shape", destination = "grain_position", amount = .34},
+               {source = "lfo", destination = "cutoff", amount = .29}},
         scene = {mesh = "relay.obj", tint = 0x8974c0, accent = 0xa9c5f4, spin = 0.5, tilt = 0.1, aspect = 0.96, satellites = 3}
     },
     {
@@ -117,6 +156,12 @@ return {
         attack = .31, decay = 1.70, sustain = .80, release = 2.5,
         morph = .66, color = .61, echo = .42, detune = 27, fm = .71,
         lfo = .46, motion = .29,
+        filter = {resonance = 1.18, depth = 1.52, velocity = .69, keytrack = .43,
+                  attack = .67, decay = 1.27, sustain = .38, release = 2.12},
+        shape = {loop = true, {time = .74, level = .63}, {time = 1.18, level = -.55},
+                 {time = .92, level = .05}},
+        mod = {{source = "shape", destination = "fm", amount = .42},
+               {source = "velocity", destination = "morph", amount = -.11}},
         scene = {mesh = "petal.obj", tint = 0x80b45d, accent = 0xf1bfe3, spin = 0.33, tilt = -0.24, aspect = 0.97, satellites = 4}
     },
     {
@@ -124,13 +169,25 @@ return {
         attack = .91, decay = 2.40, sustain = .70, release = 3.9,
         morph = .68, color = .33, echo = .59, detune = -1200, fm = .29,
         lfo = .12, motion = .18,
+        filter = {resonance = 1.54, depth = 1.22, velocity = .52, keytrack = .51,
+                  attack = 1.13, decay = 1.75, sustain = .26, release = 2.68},
+        shape = {loop = true, {time = 1.7, level = .51}, {time = 2.3, level = -.70}},
+        mod = {{source = "lfo", destination = "cutoff", amount = .58},
+               {source = "shape", destination = "morph", amount = .16}},
         scene = {mesh = "anvil.obj", tint = 0x628da8, accent = 0xbee9f0, spin = 0.42, tilt = 0.24, aspect = 0.98, satellites = 4}
     },
     {
         name = "Opaline Wake", wave_a = "triangle", wave_b = "sine",
         attack = .56, decay = 1.33, sustain = .85, release = 2.1,
         morph = .43, color = .70, echo = .52, detune = -7, fm = 1.55,
-        lfo = .24, motion = .34, sample = .15, sample_file = "canopy.wav",
+        lfo = .24, motion = .34,
+        filter = {resonance = .92, depth = .78, velocity = .64, keytrack = .37,
+                  attack = .78, decay = 1.22, sustain = .31, release = 1.71},
+        shape = {loop = true, {time = 1.68, level = .64}, {time = 2.0, level = -.59}},
+        sample = .26, sample_file = "canopy.wav",
+        grain = {size = .105, density = 31, position = .38, spray = .16},
+        mod = {{source = "shape", destination = "grain_position", amount = .26},
+               {source = "velocity", destination = "sample", amount = .14}},
         scene = {mesh = "prism.obj", tint = 0x89d4c9, accent = 0xf5b4e2, spin = 0.63, tilt = -0.11, aspect = 0.85, satellites = 2}
     },
     {
@@ -138,6 +195,12 @@ return {
         attack = .68, decay = 1.54, sustain = .59, release = 3.0,
         morph = .53, color = .52, echo = .33, detune = 19, fm = .44,
         lfo = .37, motion = .16,
+        filter = {resonance = 1.58, depth = 1.15, velocity = .71, keytrack = .58,
+                  attack = .88, decay = 1.46, sustain = .28, release = 2.07},
+        shape = {loop = true, {time = 1.1, level = -.42}, {time = 1.5, level = .71},
+                 {time = .88, level = .02}},
+        mod = {{source = "shape", destination = "cutoff", amount = .54},
+               {source = "lfo", destination = "fm", amount = .22}},
         scene = {mesh = "spire.obj", tint = 0xde7953, accent = 0xfccf86, spin = 0.54, tilt = -0.47, aspect = 1.11, satellites = 4}
     },
     {
@@ -145,6 +208,13 @@ return {
         attack = 1.68, decay = 2.00, sustain = .76, release = 5.2,
         morph = .09, color = .63, echo = .71, detune = 1200, fm = .19,
         lfo = .06, motion = .08,
+        filter = {resonance = .84, depth = .54, velocity = .34, keytrack = .30,
+                  attack = 2.10, decay = 2.37, sustain = .58, release = 3.98},
+        shape = {loop = true, {time = 2.8, level = .76}, {time = 3.6, level = -.75}},
+        sample = .44, sample_file = "orchard-air.wav",
+        grain = {size = .23, density = 23, position = .52, spray = .18},
+        mod = {{source = "shape", destination = "grain_position", amount = .36},
+               {source = "lfo", destination = "sample", amount = .11}},
         scene = {mesh = "arch.obj", tint = 0x546f9e, accent = 0xd0b3f0, spin = -0.59, tilt = 0.32, aspect = 1.04, satellites = 5}
     },
 
@@ -154,6 +224,10 @@ return {
         attack = .28, decay = 1.20, sustain = .84, release = 1.60,
         morph = .46, color = .58, echo = .28, detune = 12, fm = .08,
         lfo = .66, motion = .21,
+        filter = {resonance = 1.02, depth = .89, velocity = .67, keytrack = .71,
+                  attack = .33, decay = .78, sustain = .43, release = 1.12},
+        mod = {{source = "lfo", destination = "pitch", amount = .16},
+               {source = "amp_env", destination = "morph", amount = .16}},
         scene = {mesh = "fan.obj", tint = 0xce9a57, accent = 0xf5d99b, spin = 0.45, tilt = -0.51, aspect = 1.05, satellites = 4}
     },
     {
@@ -161,13 +235,24 @@ return {
         attack = .19, decay = .93, sustain = .79, release = 1.1,
         morph = .55, color = .64, echo = .20, detune = -9, fm = .34,
         lfo = .87, motion = .13,
+        filter = {resonance = .92, depth = .81, velocity = .76, keytrack = .78,
+                  attack = .24, decay = .70, sustain = .37, release = .87},
+        mod = {{source = "lfo", destination = "pitch", amount = .12},
+               {source = "velocity", destination = "morph", amount = .17}},
         scene = {mesh = "kite.obj", tint = 0xaeb384, accent = 0xe0e3b1, spin = 0.48, tilt = 0.32, aspect = 0.95, satellites = 1}
     },
     {
         name = "Hollow Choir", wave_a = "sine", wave_b = "square",
         attack = .47, decay = 1.71, sustain = .77, release = 2.7,
-        morph = .21, color = .47, echo = .52, detune = 7, fm = 1.13,
+        morph = .21, color = .24, echo = .52, detune = 7, fm = 1.13,
         lfo = .39, motion = .11,
+        filter = {mode = "bandpass", resonance = .76, depth = .68, velocity = .46, keytrack = .79,
+                  attack = .64, decay = 1.32, sustain = .44, release = 2.10},
+        shape = {loop = true, {time = 1.63, level = .57}, {time = 1.96, level = -.62}},
+        sample = .31, sample_file = "orchard-air.wav",
+        grain = {size = .18, density = 30, position = .29, spray = .12},
+        mod = {{source = "shape", destination = "grain_position", amount = .29},
+               {source = "lfo", destination = "pitch", amount = .06}},
         scene = {mesh = "arch.obj", tint = 0xa08ac6, accent = 0xd1a2be, spin = 0.55, tilt = 0.23, aspect = 1.04, satellites = 5}
     },
     {
@@ -175,6 +260,10 @@ return {
         attack = .39, decay = 1.13, sustain = .83, release = 1.65,
         morph = .59, color = .55, echo = .37, detune = 1200, fm = .10,
         lfo = .55, motion = .10,
+        filter = {resonance = 1.13, depth = .64, velocity = .61, keytrack = .70,
+                  attack = .48, decay = .97, sustain = .49, release = 1.32},
+        mod = {{source = "lfo", destination = "pitch", amount = .14},
+               {source = "filter_env", destination = "morph", amount = .18}},
         scene = {mesh = "helix.obj", tint = 0x8962ce, accent = 0xdbacfb, spin = 0.57, tilt = 0.01, aspect = 0.97, satellites = 3}
     },
     {
@@ -182,20 +271,33 @@ return {
         attack = .16, decay = .84, sustain = .81, release = 1.05,
         morph = .51, color = .72, echo = .22, detune = 7, fm = .05,
         lfo = 1.18, motion = .29,
+        filter = {resonance = .84, depth = .75, velocity = .52, keytrack = .69,
+                  attack = .20, decay = .57, sustain = .42, release = .78},
+        mod = {{source = "lfo", destination = "pitch", amount = .21},
+               {source = "velocity", destination = "cutoff", amount = .29}},
         scene = {mesh = "petal.obj", tint = 0xdf95ab, accent = 0xf7d7a0, spin = 0.56, tilt = 0.25, aspect = 1.09, satellites = 4}
     },
     {
         name = "Grove Vox", wave_a = "sine", wave_b = "triangle",
         attack = .52, decay = 1.31, sustain = .73, release = 2.75,
-        morph = .35, color = .53, echo = .43, detune = 18, fm = 2.14,
+        morph = .35, color = .25, echo = .43, detune = 18, fm = 2.14,
         lfo = .58, motion = .22,
+        filter = {mode = "bandpass", resonance = .7, depth = .89, velocity = .45, keytrack = .84,
+                  attack = .62, decay = 1.30, sustain = .36, release = 2.03},
+        shape = {loop = true, {time = 1.28, level = .51}, {time = 1.6, level = -.57}},
+        mod = {{source = "shape", destination = "cutoff", amount = .37},
+               {source = "lfo", destination = "pitch", amount = .09}},
         scene = {mesh = "bell.obj", tint = 0x769b68, accent = 0xc8db9b, spin = -0.52, tilt = -0.02, aspect = 1.06, satellites = 4}
     },
     {
         name = "Reed Chamber", wave_a = "square", wave_b = "triangle",
         attack = .09, decay = .54, sustain = .75, release = .86,
-        morph = .69, color = .49, echo = .19, detune = -4, fm = .41,
+        morph = .69, color = .17, echo = .19, detune = -4, fm = .41,
         lfo = 1.25, motion = .11,
+        filter = {mode = "bandpass", resonance = .67, depth = .61, velocity = .52, keytrack = 1.01,
+                  attack = .087, decay = .39, sustain = .36, release = .69},
+        mod = {{source = "lfo", destination = "pitch", amount = .15},
+               {source = "amp_env", destination = "fm", amount = .23}},
         scene = {mesh = "spire.obj", tint = 0xc3ab56, accent = 0xe1e9a5, spin = -0.55, tilt = -0.36, aspect = 0.85, satellites = 4}
     },
     {
@@ -203,6 +305,13 @@ return {
         attack = .66, decay = 1.60, sustain = .76, release = 2.62,
         morph = .07, color = .64, echo = .30, detune = 0, fm = .36,
         lfo = .49, motion = .13,
+        filter = {resonance = .79, depth = .74, velocity = .43, keytrack = .55,
+                  attack = .86, decay = 1.24, sustain = .44, release = 1.85},
+        shape = {loop = true, {time = 1.82, level = .58}, {time = 2.27, level = -.44}},
+        sample = .25, sample_file = "orchard-air.wav",
+        grain = {size = .17, density = 26, position = .55, spray = .11},
+        mod = {{source = "shape", destination = "grain_position", amount = .21},
+               {source = "lfo", destination = "morph", amount = .06}},
         scene = {mesh = "fan.obj", tint = 0x9c8ebd, accent = 0xe0bdd9, spin = -0.55, tilt = -0.52, aspect = 1.09, satellites = 4}
     },
     {
@@ -210,13 +319,24 @@ return {
         attack = .38, decay = 1.47, sustain = .78, release = 1.64,
         morph = .23, color = .67, echo = .36, detune = 11, fm = .15,
         lfo = .79, motion = .29,
+        filter = {resonance = 1.08, depth = 1.27, velocity = .59, keytrack = .82,
+                  attack = .42, decay = 1.03, sustain = .37, release = 1.16},
+        mod = {{source = "lfo", destination = "pitch", amount = .21},
+               {source = "filter_env", destination = "morph", amount = -.16}},
         scene = {mesh = "kite.obj", tint = 0x79a8d4, accent = 0xf4e7c9, spin = 0.66, tilt = -0.37, aspect = 1.0, satellites = 3}
     },
     {
         name = "Ghost Chorale", wave_a = "sine", wave_b = "sine",
         attack = .90, decay = 1.75, sustain = .82, release = 3.36,
-        morph = .31, color = .56, echo = .64, detune = 1200, fm = 2.65,
+        morph = .31, color = .30, echo = .64, detune = 1200, fm = 2.65,
         lfo = .19, motion = .32,
+        filter = {mode = "bandpass", resonance = .77, depth = .67, velocity = .44, keytrack = .86,
+                  attack = 1.16, decay = 1.51, sustain = .58, release = 2.78},
+        shape = {loop = true, {time = 1.9, level = .61}, {time = 2.4, level = -.60}},
+        sample = .37, sample_file = "orchard-air.wav",
+        grain = {size = .19, density = 28, position = .43, spray = .16},
+        mod = {{source = "shape", destination = "grain_position", amount = .28},
+               {source = "lfo", destination = "fm", amount = .51}},
         scene = {mesh = "relay.obj", tint = 0x829ace, accent = 0xdfbce8, spin = 0.35, tilt = -0.17, aspect = 1.03, satellites = 4}
     },
 
@@ -226,6 +346,10 @@ return {
         attack = .007, decay = .65, sustain = .32, release = .64,
         morph = .59, color = .74, echo = .16, detune = 1200, fm = .64,
         lfo = .46, motion = .08, sample = .24, sample_file = "canopy.wav",
+        filter = {resonance = .95, depth = 1.43, velocity = .94, keytrack = .68,
+                  attack = .004, decay = .24, sustain = .11, release = .30},
+        mod = {{source = "filter_env", destination = "fm", amount = .47},
+               {source = "velocity", destination = "sample", amount = .14}},
         scene = {mesh = "bell.obj", tint = 0xc2d8d8, accent = 0xf6cea8, spin = 0.53, tilt = -0.34, aspect = 0.9, satellites = 5}
     },
     {
@@ -233,6 +357,10 @@ return {
         attack = .005, decay = .91, sustain = .40, release = .53,
         morph = .17, color = .58, echo = .22, detune = 1200, fm = 1.33,
         lfo = .89, motion = .08,
+        filter = {resonance = .87, depth = 1.23, velocity = 1.22, keytrack = .61,
+                  attack = .005, decay = .30, sustain = .14, release = .36},
+        mod = {{source = "filter_env", destination = "fm", amount = 1.12},
+               {source = "velocity", destination = "fm", amount = .63}},
         scene = {mesh = "anvil.obj", tint = 0xa27a73, accent = 0xe0b68a, spin = 0.62, tilt = 0.06, aspect = 0.93, satellites = 2}
     },
     {
@@ -240,6 +368,10 @@ return {
         attack = .003, decay = .56, sustain = .24, release = .86,
         morph = .23, color = .78, echo = .30, detune = 973, fm = 2.48,
         lfo = .16, motion = .07,
+        filter = {resonance = 1.13, depth = 1.42, velocity = .89, keytrack = .79,
+                  attack = .003, decay = .22, sustain = .07, release = .40},
+        mod = {{source = "filter_env", destination = "fm", amount = 1.24},
+               {source = "velocity", destination = "morph", amount = -.13}},
         scene = {mesh = "spire.obj", tint = 0xa3bbdc, accent = 0xe1edff, spin = -0.48, tilt = -0.53, aspect = 0.88, satellites = 3}
     },
     {
@@ -247,6 +379,10 @@ return {
         attack = .004, decay = 1.06, sustain = .08, release = 1.40,
         morph = .10, color = .73, echo = .41, detune = 1200, fm = 1.70,
         lfo = .35, motion = .11, sample = .31, sample_file = "canopy.wav",
+        filter = {resonance = 1.38, depth = 1.37, velocity = .74, keytrack = .83,
+                  attack = .004, decay = .34, sustain = .08, release = .51},
+        mod = {{source = "filter_env", destination = "fm", amount = .82},
+               {source = "velocity", destination = "sample", amount = .16}},
         scene = {mesh = "bell.obj", tint = 0xd3a14c, accent = 0xffdba1, spin = 0.52, tilt = -0.5, aspect = 0.88, satellites = 1}
     },
     {
@@ -258,6 +394,8 @@ return {
         grain = {size = .075, density = 35, position = .19, spray = .15},
         mod = {{source = "lfo", destination = "grain_position", amount = .12},
                {source = "amp_env", destination = "fm", amount = .86}},
+        filter = {resonance = 1.18, depth = .72, velocity = .44, keytrack = .76,
+                  attack = .018, decay = .74, sustain = .23, release = 1.05},
         scene = {mesh = "relay.obj", tint = 0x7a92dd, accent = 0xd0c3fa, spin = 0.38, tilt = 0.04, aspect = 1.02, satellites = 2}
     },
     {
@@ -265,6 +403,10 @@ return {
         attack = .016, decay = .21, sustain = .91, release = .11,
         morph = .43, color = .54, echo = .18, detune = 1200, fm = .15,
         lfo = 2.10, motion = .19,
+        filter = {resonance = .79, depth = .37, velocity = .37, keytrack = .71,
+                  attack = .019, decay = .23, sustain = .72, release = .11},
+        mod = {{source = "lfo", destination = "pitch", amount = .13},
+               {source = "velocity", destination = "morph", amount = .14}},
         scene = {mesh = "cage.obj", tint = 0x79964e, accent = 0xd3cb84, spin = 0.66, tilt = 0.3, aspect = 0.92, satellites = 4}
     },
     {
@@ -272,6 +414,10 @@ return {
         attack = .002, decay = .33, sustain = .06, release = .43,
         morph = .47, color = .67, echo = .21, detune = 1200, fm = 1.76,
         lfo = .25, motion = .06, sample = .16, sample_file = "canopy.wav",
+        filter = {resonance = 1.48, depth = 1.21, velocity = .98, keytrack = .90,
+                  attack = .003, decay = .15, sustain = .05, release = .27},
+        mod = {{source = "filter_env", destination = "fm", amount = .96},
+               {source = "velocity", destination = "sample", amount = .14}},
         scene = {mesh = "prism.obj", tint = 0x74bed4, accent = 0xffb8a6, spin = 0.47, tilt = -0.47, aspect = 0.89, satellites = 5}
     },
     {
@@ -279,13 +425,23 @@ return {
         attack = .004, decay = 1.20, sustain = .22, release = 1.08,
         morph = .25, color = .76, echo = .32, detune = 1104, fm = 2.89,
         lfo = .64, motion = .20,
+        filter = {resonance = 1.20, depth = 1.33, velocity = .58, keytrack = .73,
+                  attack = .006, decay = .35, sustain = .09, release = .59},
+        mod = {{source = "filter_env", destination = "fm", amount = 1.17},
+               {source = "lfo", destination = "pitch", amount = .12}},
         scene = {mesh = "helix.obj", tint = 0x72d4ba, accent = 0xe4bbec, spin = -0.38, tilt = 0.25, aspect = 1.08, satellites = 1}
     },
     {
         name = "Rain on Glass", wave_a = "square", wave_b = "sine",
         attack = .004, decay = .73, sustain = .13, release = 1.40,
         morph = .66, color = .79, echo = .49, detune = 608, fm = 1.32,
-        lfo = .29, motion = .12, sample = .35, sample_file = "canopy.wav",
+        lfo = .29, motion = .12,
+        filter = {resonance = .94, depth = .92, velocity = .54, keytrack = .60,
+                  attack = .004, decay = .42, sustain = .20, release = .77},
+        sample = .42, sample_file = "filament.wav",
+        grain = {size = .095, density = 34, position = .22, spray = .23},
+        mod = {{source = "lfo", destination = "grain_position", amount = .14},
+               {source = "velocity", destination = "sample", amount = .15}},
         scene = {mesh = "kite.obj", tint = 0x74a4db, accent = 0xc2f1f4, spin = 0.54, tilt = -0.33, aspect = 1.03, satellites = 5}
     },
     {
@@ -293,6 +449,10 @@ return {
         attack = .008, decay = .78, sustain = .41, release = .41,
         morph = .28, color = .63, echo = .26, detune = 17, fm = .54,
         lfo = .18, motion = .09, sample = .19, sample_file = "canopy.wav",
+        filter = {resonance = .89, depth = 1.46, velocity = 1.11, keytrack = .72,
+                  attack = .003, decay = .29, sustain = .18, release = .37},
+        mod = {{source = "filter_env", destination = "fm", amount = .39},
+               {source = "velocity", destination = "sample", amount = .16}},
         scene = {mesh = "anvil.obj", tint = 0x8498ae, accent = 0xf4c6b8, spin = 0.59, tilt = 0.28, aspect = 1.1, satellites = 4}
     },
     {
@@ -300,13 +460,23 @@ return {
         attack = .002, decay = .52, sustain = .10, release = .62,
         morph = .71, color = .82, echo = .33, detune = 1200, fm = .91,
         lfo = 1.60, motion = .12,
+        filter = {resonance = 1.20, depth = 1.35, velocity = .59, keytrack = .94,
+                  attack = .002, decay = .20, sustain = .06, release = .25},
+        mod = {{source = "filter_env", destination = "fm", amount = .63},
+               {source = "lfo", destination = "pitch", amount = .095}},
         scene = {mesh = "cage.obj", tint = 0x9eafbf, accent = 0xecc685, spin = -0.72, tilt = -0.27, aspect = 1.01, satellites = 1}
     },
     {
         name = "Autumn Chimes", wave_a = "sine", wave_b = "triangle",
         attack = .009, decay = 1.88, sustain = .05, release = 2.44,
         morph = .31, color = .69, echo = .67, detune = 702, fm = 3.30,
-        lfo = .23, motion = .22, sample = .18, sample_file = "canopy.wav",
+        lfo = .23, motion = .22,
+        filter = {resonance = 1.07, depth = .85, velocity = .52, keytrack = .76,
+                  attack = .008, decay = .62, sustain = .18, release = 1.39},
+        sample = .31, sample_file = "canopy.wav",
+        grain = {size = .13, density = 24, position = .16, spray = .16},
+        mod = {{source = "lfo", destination = "grain_position", amount = .23},
+               {source = "filter_env", destination = "fm", amount = 1.04}},
         scene = {mesh = "bell.obj", tint = 0xdf9956, accent = 0xe66d56, spin = 0.56, tilt = -0.45, aspect = 1.14, satellites = 3}
     },
 
@@ -316,6 +486,10 @@ return {
         attack = .002, decay = .22, sustain = .15, release = .33,
         morph = .35, color = .72, echo = .23, detune = 16, fm = .37,
         lfo = .45, motion = .14,
+        filter = {resonance = 1.34, depth = 1.55, velocity = 1.01, keytrack = .65,
+                  attack = .002, decay = .095, sustain = .04, release = .18},
+        mod = {{source = "velocity", destination = "morph", amount = -.18},
+               {source = "filter_env", destination = "fm", amount = .54}},
         scene = {mesh = "petal.obj", tint = 0x83b84d, accent = 0xe8cf71, spin = 0.65, tilt = -0.42, aspect = 1.09, satellites = 2}
     },
     {
@@ -323,6 +497,10 @@ return {
         attack = .004, decay = .37, sustain = .12, release = .68,
         morph = .27, color = .61, echo = .31, detune = 1200, fm = 1.61,
         lfo = .31, motion = .07,
+        filter = {resonance = 1.23, depth = 1.72, velocity = .88, keytrack = .82,
+                  attack = .003, decay = .18, sustain = .09, release = .32},
+        mod = {{source = "filter_env", destination = "fm", amount = .88},
+               {source = "velocity", destination = "morph", amount = .10}},
         scene = {mesh = "cage.obj", tint = 0xbb8d76, accent = 0xeee3a3, spin = 0.34, tilt = 0.29, aspect = 0.97, satellites = 2}
     },
     {
@@ -330,6 +508,10 @@ return {
         attack = .001, decay = .30, sustain = .16, release = .29,
         morph = .48, color = .69, echo = .14, detune = -11, fm = .60,
         lfo = .52, motion = .12, sample = .12, sample_file = "canopy.wav",
+        filter = {resonance = .82, depth = .91, velocity = .75, keytrack = .59,
+                  attack = .003, decay = .12, sustain = .08, release = .17},
+        mod = {{source = "filter_env", destination = "fm", amount = .44},
+               {source = "velocity", destination = "sample", amount = .13}},
         scene = {mesh = "kite.obj", tint = 0xd68eab, accent = 0xf6cdbc, spin = 0.5, tilt = 0.0, aspect = 1.12, satellites = 3}
     },
     {
@@ -337,14 +519,18 @@ return {
         attack = .003, decay = .32, sustain = .09, release = .35,
         morph = .46, color = .55, echo = .26, detune = -8, fm = .21,
         lfo = .82, motion = .13,
+        filter = {resonance = 1.38, depth = 1.69, velocity = .87, keytrack = .77,
+                  attack = .005, decay = .16, sustain = .05, release = .25},
+        mod = {{source = "filter_env", destination = "morph", amount = -.26},
+               {source = "velocity", destination = "fm", amount = .37}},
         scene = {mesh = "fan.obj", tint = 0xb1af67, accent = 0xe9c883, spin = -0.59, tilt = -0.25, aspect = 0.84, satellites = 2}
     },
     {
         name = "Quartz Droplet", wave_a = "sine", wave_b = "triangle",
         attack = .005, decay = .27, sustain = .07, release = .90,
-        morph = .20, color = .89, echo = .60, detune = 690, fm = 2.22,
+        morph = .20, color = .23, echo = .60, detune = 690, fm = 2.22,
         lfo = .48, motion = .16,
-        filter = {mode = "bandpass", resonance = 1.22, depth = 1.6, keytrack = .68,
+        filter = {mode = "bandpass", resonance = .92, depth = 1.16, keytrack = .86,
                   attack = .004, decay = .19, sustain = .08, release = .32},
         mod = {{source = "filter_env", destination = "fm", amount = 1.12}},
         scene = {mesh = "spire.obj", tint = 0x73cde7, accent = 0xb8eef5, spin = -0.51, tilt = 0.17, aspect = 1.07, satellites = 4}
@@ -354,6 +540,10 @@ return {
         attack = .004, decay = .48, sustain = .17, release = .46,
         morph = .56, color = .55, echo = .29, detune = 12, fm = .48,
         lfo = .27, motion = .19,
+        filter = {resonance = 1.21, depth = 1.57, velocity = .64, keytrack = .76,
+                  attack = .004, decay = .19, sustain = .11, release = .28},
+        mod = {{source = "filter_env", destination = "morph", amount = -.19},
+               {source = "lfo", destination = "cutoff", amount = .24}},
         scene = {mesh = "relay.obj", tint = 0xc8884b, accent = 0xf8b568, spin = 0.31, tilt = 0.47, aspect = 1.07, satellites = 1}
     },
     {
@@ -361,6 +551,10 @@ return {
         attack = .002, decay = .45, sustain = .10, release = .57,
         morph = .26, color = .78, echo = .29, detune = -22, fm = 1.12,
         lfo = .56, motion = .15, sample = .15, sample_file = "canopy.wav",
+        filter = {resonance = 1.55, depth = 1.64, velocity = .86, keytrack = .90,
+                  attack = .003, decay = .15, sustain = .08, release = .31},
+        mod = {{source = "filter_env", destination = "fm", amount = 1.2},
+               {source = "velocity", destination = "sample", amount = .10}},
         scene = {mesh = "petal.obj", tint = 0x599f78, accent = 0xd0d693, spin = 0.61, tilt = -0.19, aspect = 1.05, satellites = 2}
     },
     {
@@ -368,13 +562,23 @@ return {
         attack = .003, decay = .14, sustain = .12, release = .21,
         morph = .32, color = .73, echo = .27, detune = 1200, fm = .33,
         lfo = 1.20, motion = .13,
+        filter = {resonance = 1.57, depth = 1.38, velocity = .94, keytrack = .53,
+                  attack = .003, decay = .072, sustain = .05, release = .14},
+        mod = {{source = "filter_env", destination = "fm", amount = .83},
+               {source = "velocity", destination = "morph", amount = -.18}},
         scene = {mesh = "prism.obj", tint = 0xeb857f, accent = 0xffd36d, spin = 0.5, tilt = -0.15, aspect = 1.05, satellites = 3}
     },
     {
         name = "Raindrop Zither", wave_a = "sine", wave_b = "square",
         attack = .003, decay = .42, sustain = .13, release = .77,
         morph = .17, color = .76, echo = .49, detune = 841, fm = 1.87,
-        lfo = .73, motion = .22, sample = .26, sample_file = "canopy.wav",
+        lfo = .73, motion = .22,
+        filter = {resonance = 1.05, depth = 1.10, velocity = .72, keytrack = .77,
+                  attack = .004, decay = .24, sustain = .15, release = .55},
+        sample = .29, sample_file = "filament.wav",
+        grain = {size = .065, density = 27, position = .22, spray = .19},
+        mod = {{source = "lfo", destination = "grain_position", amount = .17},
+               {source = "filter_env", destination = "fm", amount = .64}},
         scene = {mesh = "helix.obj", tint = 0x61b3d1, accent = 0xe4bdeb, spin = -0.4, tilt = -0.09, aspect = 1.17, satellites = 4}
     },
     {
@@ -382,6 +586,10 @@ return {
         attack = .001, decay = .28, sustain = .19, release = .26,
         morph = .12, color = .62, echo = .12, detune = 0, fm = .44,
         lfo = .39, motion = .08,
+        filter = {resonance = 1.04, depth = 1.54, velocity = .77, keytrack = .61,
+                  attack = .002, decay = .11, sustain = .09, release = .20},
+        mod = {{source = "filter_env", destination = "morph", amount = .32},
+               {source = "velocity", destination = "fm", amount = .38}},
         scene = {mesh = "kite.obj", tint = 0x8d879f, accent = 0xe2a576, spin = 0.53, tilt = 0.39, aspect = 0.97, satellites = 5}
     },
 
@@ -391,13 +599,21 @@ return {
         attack = .011, decay = .34, sustain = .82, release = .21,
         morph = .72, color = .31, echo = .12, detune = -1200, fm = .22,
         lfo = .43, motion = .12,
+        filter = {resonance = .78, depth = .59, velocity = .54, keytrack = .34,
+                  attack = .019, decay = .24, sustain = .32, release = .15},
+        mod = {{source = "filter_env", destination = "fm", amount = .46},
+               {source = "velocity", destination = "morph", amount = -.09}},
         scene = {mesh = "anvil.obj", tint = 0x6f789e, accent = 0xb489de, spin = 0.65, tilt = -0.25, aspect = 0.87, satellites = 3}
     },
     {
         name = "Pitch Black", wave_a = "square", wave_b = "sine",
         attack = .004, decay = .29, sustain = .70, release = .14,
-        morph = .42, color = .45, echo = .10, detune = -1200, fm = .15,
+        morph = .42, color = .30, echo = .10, detune = -1200, fm = .15,
         lfo = .56, motion = .14,
+        filter = {resonance = 1.57, depth = 1.56, velocity = 1.00, keytrack = .60,
+                  attack = .003, decay = .16, sustain = .06, release = .14},
+        mod = {{source = "filter_env", destination = "morph", amount = -.21},
+               {source = "velocity", destination = "fm", amount = .19}},
         scene = {mesh = "cage.obj", tint = 0x586d85, accent = 0xf490bc, spin = -0.46, tilt = -0.13, aspect = 1.18, satellites = 4}
     },
     {
@@ -416,20 +632,32 @@ return {
         attack = .017, decay = .52, sustain = .83, release = .22,
         morph = .62, color = .35, echo = .09, detune = -1200, fm = .74,
         lfo = .25, motion = .05,
+        filter = {resonance = .79, depth = .74, velocity = .52, keytrack = .40,
+                  attack = .033, decay = .33, sustain = .30, release = .17},
+        mod = {{source = "filter_env", destination = "fm", amount = .32},
+               {source = "lfo", destination = "cutoff", amount = .21}},
         scene = {mesh = "prism.obj", tint = 0x8b628f, accent = 0xe992be, spin = 0.31, tilt = -0.09, aspect = 1.0, satellites = 3}
     },
     {
         name = "Cobalt Punch", wave_a = "square", wave_b = "triangle",
         attack = .002, decay = .18, sustain = .42, release = .14,
-        morph = .54, color = .65, echo = .12, detune = -1200, fm = .90,
+        morph = .54, color = .40, echo = .12, detune = -1200, fm = .90,
         lfo = 1.15, motion = .15,
+        filter = {resonance = 2.24, depth = 2.02, velocity = 1.27, keytrack = .59,
+                  attack = .003, decay = .101, sustain = .07, release = .14},
+        mod = {{source = "filter_env", destination = "fm", amount = .68},
+               {source = "velocity", destination = "morph", amount = -.15}},
         scene = {mesh = "anvil.obj", tint = 0x4d88d2, accent = 0x72dbee, spin = 0.67, tilt = -0.32, aspect = 0.89, satellites = 2}
     },
     {
         name = "Silicon Funk", wave_a = "saw", wave_b = "square",
         attack = .004, decay = .26, sustain = .46, release = .18,
-        morph = .28, color = .62, echo = .18, detune = -13, fm = 1.39,
+        morph = .28, color = .39, echo = .18, detune = -13, fm = 1.39,
         lfo = 2.22, motion = .24,
+        filter = {resonance = 2.61, depth = 1.94, velocity = 1.16, keytrack = .62,
+                  attack = .008, decay = .20, sustain = .13, release = .17},
+        mod = {{source = "lfo", destination = "cutoff", amount = .53},
+               {source = "filter_env", destination = "fm", amount = .66}},
         scene = {mesh = "relay.obj", tint = 0x73ba84, accent = 0xd4ed85, spin = 0.72, tilt = 0.02, aspect = 0.93, satellites = 3}
     },
     {
@@ -437,27 +665,45 @@ return {
         attack = .047, decay = .60, sustain = .79, release = .37,
         morph = .55, color = .27, echo = .16, detune = -1200, fm = .83,
         lfo = .77, motion = .24,
+        filter = {resonance = 1.22, depth = 1.12, velocity = .63, keytrack = .44,
+                  attack = .058, decay = .38, sustain = .41, release = .26},
+        mod = {{source = "lfo", destination = "cutoff", amount = .39},
+               {source = "filter_env", destination = "fm", amount = .34}},
         scene = {mesh = "arch.obj", tint = 0x458ca7, accent = 0x87e4ce, spin = 0.48, tilt = -0.35, aspect = 1.08, satellites = 2}
     },
     {
         name = "Neon Growl", wave_a = "saw", wave_b = "sine",
         attack = .010, decay = .45, sustain = .66, release = .26,
-        morph = .37, color = .53, echo = .24, detune = -1200, fm = 3.35,
+        morph = .37, color = .40, echo = .24, detune = -1200, fm = 3.35,
         lfo = 1.16, motion = .26,
+        filter = {resonance = 2.75, depth = 1.56, velocity = .91, keytrack = .55,
+                  attack = .013, decay = .29, sustain = .23, release = .22},
+        shape = {loop = true, {time = .27, level = .65}, {time = .40, level = -.73},
+                 {time = .19, level = .09}},
+        mod = {{source = "shape", destination = "fm", amount = 1.26},
+               {source = "lfo", destination = "cutoff", amount = .64}},
         scene = {mesh = "cage.obj", tint = 0xb56bba, accent = 0xffa774, spin = 0.5, tilt = 0.13, aspect = 1.16, satellites = 4}
     },
     {
         name = "Iron Pulse", wave_a = "square", wave_b = "square",
         attack = .004, decay = .33, sustain = .65, release = .19,
-        morph = .36, color = .43, echo = .07, detune = 20, fm = .05,
+        morph = .36, color = .34, echo = .07, detune = 20, fm = .05,
         lfo = .84, motion = .21,
+        filter = {resonance = 1.66, depth = 1.86, velocity = .79, keytrack = .65,
+                  attack = .004, decay = .15, sustain = .11, release = .16},
+        mod = {{source = "filter_env", destination = "morph", amount = .19},
+               {source = "lfo", destination = "cutoff", amount = .38}},
         scene = {mesh = "anvil.obj", tint = 0x9e8190, accent = 0xea9277, spin = -0.51, tilt = -0.04, aspect = 1.13, satellites = 5}
     },
     {
         name = "Mercury Bass", wave_a = "triangle", wave_b = "saw",
         attack = .006, decay = .44, sustain = .71, release = .23,
-        morph = .47, color = .54, echo = .16, detune = -1200, fm = .58,
+        morph = .47, color = .41, echo = .16, detune = -1200, fm = .58,
         lfo = 1.68, motion = .20,
+        filter = {resonance = 1.72, depth = 1.31, velocity = .99, keytrack = .54,
+                  attack = .008, decay = .24, sustain = .20, release = .20},
+        mod = {{source = "lfo", destination = "cutoff", amount = .55},
+               {source = "filter_env", destination = "fm", amount = .63}},
         scene = {mesh = "bell.obj", tint = 0x849bc6, accent = 0xc5baf0, spin = 0.65, tilt = -0.41, aspect = 0.98, satellites = 2}
     },
     {
@@ -465,13 +711,21 @@ return {
         attack = .019, decay = .62, sustain = .75, release = .31,
         morph = .09, color = .37, echo = .10, detune = 0, fm = .25,
         lfo = .37, motion = .11,
+        filter = {resonance = .94, depth = 1.07, velocity = .53, keytrack = .47,
+                  attack = .035, decay = .43, sustain = .32, release = .22},
+        mod = {{source = "filter_env", destination = "morph", amount = .15},
+               {source = "lfo", destination = "cutoff", amount = .21}},
         scene = {mesh = "fan.obj", tint = 0x567b8e, accent = 0xbcbd80, spin = 0.33, tilt = 0.24, aspect = 1.02, satellites = 2}
     },
     {
         name = "Terminal Bass", wave_a = "square", wave_b = "sine",
         attack = .004, decay = .22, sustain = .58, release = .20,
-        morph = .46, color = .58, echo = .19, detune = 1200, fm = 1.55,
+        morph = .46, color = .43, echo = .19, detune = 1200, fm = 1.55,
         lfo = 1.26, motion = .22,
+        filter = {resonance = 2.22, depth = 1.95, velocity = 1.08, keytrack = .64,
+                  attack = .005, decay = .14, sustain = .08, release = .16},
+        mod = {{source = "filter_env", destination = "fm", amount = .89},
+               {source = "velocity", destination = "morph", amount = -.17}},
         scene = {mesh = "cage.obj", tint = 0xbd6856, accent = 0xf7ca77, spin = 0.44, tilt = -0.3, aspect = 1.12, satellites = 3}
     },
 
@@ -479,15 +733,23 @@ return {
     {
         name = "Foxfire", wave_a = "saw", wave_b = "triangle",
         attack = .014, decay = .33, sustain = .79, release = .33,
-        morph = .35, color = .73, echo = .32, detune = 14, fm = .50,
+        morph = .35, color = .62, echo = .32, detune = 14, fm = .50,
         lfo = 1.49, motion = .17,
+        filter = {resonance = 1.47, depth = 1.38, velocity = .77, keytrack = .80,
+                  attack = .015, decay = .23, sustain = .32, release = .24},
+        mod = {{source = "lfo", destination = "pitch", amount = .18},
+               {source = "filter_env", destination = "morph", amount = -.19}},
         scene = {mesh = "kite.obj", tint = 0xef8455, accent = 0xffe58f, spin = -0.65, tilt = -0.27, aspect = 0.98, satellites = 1}
     },
     {
         name = "Phosphor Reed", wave_a = "square", wave_b = "sine",
         attack = .012, decay = .48, sustain = .76, release = .42,
-        morph = .37, color = .65, echo = .34, detune = -8, fm = .65,
+        morph = .37, color = .56, echo = .34, detune = -8, fm = .65,
         lfo = 1.94, motion = .19,
+        filter = {resonance = 1.29, depth = .97, velocity = .58, keytrack = .86,
+                  attack = .022, decay = .31, sustain = .38, release = .32},
+        mod = {{source = "lfo", destination = "pitch", amount = .20},
+               {source = "filter_env", destination = "fm", amount = .62}},
         scene = {mesh = "spire.obj", tint = 0xa8d45f, accent = 0xddf583, spin = 0.5, tilt = 0.4, aspect = 0.97, satellites = 2}
     },
     {
@@ -495,20 +757,32 @@ return {
         attack = .029, decay = .62, sustain = .83, release = .48,
         morph = .58, color = .81, echo = .39, detune = 1200, fm = .72,
         lfo = 2.25, motion = .15,
+        filter = {resonance = .95, depth = .68, velocity = .52, keytrack = .78,
+                  attack = .041, decay = .36, sustain = .46, release = .36},
+        mod = {{source = "lfo", destination = "pitch", amount = .18},
+               {source = "amp_env", destination = "fm", amount = .23}},
         scene = {mesh = "fan.obj", tint = 0x7baecb, accent = 0xeedae0, spin = 0.73, tilt = -0.14, aspect = 0.9, satellites = 4}
     },
     {
         name = "Solar Needle", wave_a = "saw", wave_b = "square",
         attack = .004, decay = .38, sustain = .68, release = .30,
-        morph = .34, color = .82, echo = .30, detune = 11, fm = .31,
+        morph = .34, color = .69, echo = .30, detune = 11, fm = .31,
         lfo = 1.20, motion = .16,
+        filter = {resonance = 1.96, depth = 1.24, velocity = .72, keytrack = .87,
+                  attack = .007, decay = .19, sustain = .31, release = .21},
+        mod = {{source = "lfo", destination = "pitch", amount = .16},
+               {source = "velocity", destination = "fm", amount = .42}},
         scene = {mesh = "spire.obj", tint = 0xf0ad4e, accent = 0xfff486, spin = 0.73, tilt = 0.01, aspect = 1.07, satellites = 2}
     },
     {
         name = "Tungsten Horn", wave_a = "saw", wave_b = "sine",
         attack = .083, decay = .43, sustain = .83, release = .31,
-        morph = .25, color = .62, echo = .17, detune = 0, fm = .83,
+        morph = .25, color = .48, echo = .17, detune = 0, fm = .83,
         lfo = .89, motion = .17,
+        filter = {resonance = 1.49, depth = 1.67, velocity = 1.03, keytrack = .77,
+                  attack = .111, decay = .34, sustain = .38, release = .24},
+        mod = {{source = "velocity", destination = "fm", amount = .49},
+               {source = "amp_env", destination = "morph", amount = -.16}},
         scene = {mesh = "bell.obj", tint = 0xc1a37b, accent = 0xfff4b0, spin = 0.64, tilt = -0.29, aspect = 0.88, satellites = 1}
     },
     {
@@ -516,6 +790,10 @@ return {
         attack = .051, decay = .66, sustain = .81, release = .39,
         morph = .07, color = .74, echo = .29, detune = 0, fm = .24,
         lfo = 2.34, motion = .13,
+        filter = {resonance = .79, depth = .63, velocity = .41, keytrack = .82,
+                  attack = .063, decay = .37, sustain = .48, release = .30},
+        mod = {{source = "lfo", destination = "pitch", amount = .18},
+               {source = "velocity", destination = "morph", amount = .09}},
         scene = {mesh = "helix.obj", tint = 0xcd8558, accent = 0x98dacb, spin = -0.7, tilt = -0.26, aspect = 1.05, satellites = 1}
     },
     {
@@ -523,55 +801,89 @@ return {
         attack = .005, decay = .37, sustain = .70, release = .22,
         morph = .33, color = .76, echo = .36, detune = 1200, fm = .15,
         lfo = 1.81, motion = .20,
+        filter = {resonance = 1.33, depth = .73, velocity = .66, keytrack = .85,
+                  attack = .006, decay = .20, sustain = .39, release = .17},
+        mod = {{source = "lfo", destination = "pitch", amount = .16},
+               {source = "filter_env", destination = "morph", amount = -.18}},
         scene = {mesh = "kite.obj", tint = 0xd472a3, accent = 0xf6c970, spin = -0.53, tilt = -0.35, aspect = 0.87, satellites = 4}
     },
     {
         name = "Lacquer Lead", wave_a = "triangle", wave_b = "saw",
         attack = .023, decay = .41, sustain = .75, release = .33,
-        morph = .54, color = .64, echo = .34, detune = -14, fm = 1.84,
+        morph = .54, color = .54, echo = .34, detune = -14, fm = 1.84,
         lfo = 1.24, motion = .18,
+        filter = {resonance = 1.53, depth = 1.18, velocity = .89, keytrack = .79,
+                  attack = .031, decay = .32, sustain = .34, release = .26},
+        mod = {{source = "lfo", destination = "pitch", amount = .15},
+               {source = "filter_env", destination = "fm", amount = .61}},
         scene = {mesh = "prism.obj", tint = 0xc95d74, accent = 0xf7ba90, spin = 0.41, tilt = 0.41, aspect = 0.89, satellites = 5}
     },
     {
         name = "Signal Pike", wave_a = "sine", wave_b = "square",
         attack = .008, decay = .30, sustain = .72, release = .31,
-        morph = .28, color = .83, echo = .36, detune = 596, fm = 2.65,
+        morph = .28, color = .71, echo = .36, detune = 596, fm = 2.65,
         lfo = .83, motion = .18,
+        filter = {resonance = 1.69, depth = 1.14, velocity = .62, keytrack = .88,
+                  attack = .010, decay = .22, sustain = .24, release = .22},
+        mod = {{source = "filter_env", destination = "fm", amount = 1.01},
+               {source = "lfo", destination = "pitch", amount = .13}},
         scene = {mesh = "spire.obj", tint = 0x5ac8d4, accent = 0xc4f4df, spin = 0.51, tilt = -0.13, aspect = 0.9, satellites = 4}
     },
     {
         name = "Lantern Piper", wave_a = "triangle", wave_b = "square",
         attack = .049, decay = .56, sustain = .80, release = .45,
-        morph = .36, color = .56, echo = .27, detune = 1200, fm = .52,
+        morph = .36, color = .30, echo = .27, detune = 1200, fm = .52,
         lfo = 1.58, motion = .23,
+        filter = {mode = "bandpass", resonance = .78, depth = .49, velocity = .46, keytrack = .95,
+                  attack = .059, decay = .37, sustain = .36, release = .32},
+        mod = {{source = "lfo", destination = "pitch", amount = .19},
+               {source = "velocity", destination = "morph", amount = .13}},
         scene = {mesh = "petal.obj", tint = 0xe9b05c, accent = 0xf7dcab, spin = 0.57, tilt = -0.53, aspect = 1.03, satellites = 3}
     },
     {
         name = "Ribbon Rocket", wave_a = "saw", wave_b = "saw",
         attack = .007, decay = .36, sustain = .80, release = .49,
-        morph = .47, color = .72, echo = .49, detune = -24, fm = .43,
+        morph = .47, color = .61, echo = .49, detune = -24, fm = .43,
         lfo = 2.07, motion = .28,
+        filter = {resonance = 1.48, depth = 1.32, velocity = .78, keytrack = .87,
+                  attack = .012, decay = .29, sustain = .35, release = .35},
+        mod = {{source = "lfo", destination = "pitch", amount = .19},
+               {source = "filter_env", destination = "morph", amount = -.16}},
         scene = {mesh = "helix.obj", tint = 0xd179ca, accent = 0xf2a176, spin = -0.83, tilt = 0.45, aspect = 1.15, satellites = 5}
     },
     {
         name = "Fever Ray", wave_a = "sine", wave_b = "triangle",
         attack = .010, decay = .33, sustain = .75, release = .54,
-        morph = .28, color = .71, echo = .45, detune = 890, fm = 3.92,
+        morph = .28, color = .59, echo = .45, detune = 890, fm = 3.92,
         lfo = 2.68, motion = .27,
+        filter = {resonance = 1.63, depth = 1.19, velocity = .74, keytrack = .80,
+                  attack = .016, decay = .22, sustain = .40, release = .38},
+        mod = {{source = "filter_env", destination = "fm", amount = 1.34},
+               {source = "lfo", destination = "pitch", amount = .24}},
         scene = {mesh = "fan.obj", tint = 0xd86483, accent = 0xf5d376, spin = 0.8, tilt = 0.34, aspect = 1.09, satellites = 5}
     },
     {
         name = "Gilt Resistor", wave_a = "square", wave_b = "triangle",
         attack = .021, decay = .42, sustain = .79, release = .28,
-        morph = .61, color = .70, echo = .20, detune = 19, fm = .23,
+        morph = .61, color = .61, echo = .20, detune = 19, fm = .23,
         lfo = .72, motion = .32,
+        filter = {resonance = 1.36, depth = 1.02, velocity = .68, keytrack = .83,
+                  attack = .026, decay = .27, sustain = .33, release = .24},
+        mod = {{source = "lfo", destination = "pitch", amount = .12},
+               {source = "velocity", destination = "morph", amount = .17}},
         scene = {mesh = "cage.obj", tint = 0xcfa353, accent = 0xbfe297, spin = 0.51, tilt = -0.04, aspect = 1.0, satellites = 1}
     },
     {
         name = "Star Scanner", wave_a = "saw", wave_b = "sine",
         attack = .026, decay = .62, sustain = .77, release = .68,
-        morph = .48, color = .75, echo = .55, detune = 1200, fm = 1.22,
+        morph = .48, color = .63, echo = .55, detune = 1200, fm = 1.22,
         lfo = 1.11, motion = .28,
+        filter = {resonance = 1.54, depth = 1.22, velocity = .66, keytrack = .82,
+                  attack = .047, decay = .41, sustain = .33, release = .51},
+        shape = {loop = true, {time = .45, level = .66}, {time = .67, level = -.62},
+                 {time = .37, level = .13}},
+        mod = {{source = "shape", destination = "cutoff", amount = .46},
+               {source = "lfo", destination = "pitch", amount = .18}},
         scene = {mesh = "relay.obj", tint = 0x5e9ddd, accent = 0xafebf9, spin = 0.48, tilt = -0.13, aspect = 0.97, satellites = 2}
     },
 
@@ -591,64 +903,126 @@ return {
     {
         name = "Lattice Pump", wave_a = "saw", wave_b = "triangle",
         attack = .028, decay = .90, sustain = .72, release = .84,
-        morph = .54, color = .52, echo = .37, detune = -19, fm = .77,
+        morph = .54, color = .43, echo = .37, detune = -19, fm = .77,
         lfo = 3.22, motion = .51,
+        filter = {resonance = 1.79, depth = 1.61, velocity = .59, keytrack = .52,
+                  attack = .04, decay = .36, sustain = .28, release = .43},
+        shape = {loop = true, {time = .045, level = .91}, {time = .20, level = -.88},
+                 {time = .055, level = .29}, {time = .22, level = -.73}},
+        mod = {{source = "shape", destination = "cutoff", amount = 1.39},
+               {source = "shape", destination = "morph", amount = .27}},
         scene = {mesh = "cage.obj", tint = 0x59b4ab, accent = 0xc2eeb9, spin = -0.7, tilt = 0.05, aspect = 1.13, satellites = 4}
     },
     {
         name = "Tern Signal", wave_a = "sine", wave_b = "noise",
         attack = .018, decay = .62, sustain = .76, release = .65,
-        morph = .25, color = .70, echo = .42, detune = 0, fm = .88,
+        morph = .25, color = .56, echo = .42, detune = 0, fm = .88,
         lfo = 6.00, motion = .28,
+        filter = {resonance = 1.41, depth = .95, velocity = .63, keytrack = .53,
+                  attack = .029, decay = .30, sustain = .25, release = .47},
+        shape = {loop = true, {time = .055, level = .76}, {time = .12, level = -.84},
+                 {time = .048, level = .44}, {time = .14, level = -.68}},
+        mod = {{source = "shape", destination = "morph", amount = .24},
+               {source = "shape", destination = "cutoff", amount = .87}},
         scene = {mesh = "kite.obj", tint = 0x8facb7, accent = 0xf6d09d, spin = -1.1, tilt = -0.26, aspect = 1.16, satellites = 1}
     },
     {
         name = "Neon Weave", wave_a = "sine", wave_b = "saw",
         attack = .038, decay = 1.03, sustain = .71, release = 1.07,
-        morph = .49, color = .62, echo = .59, detune = 27, fm = 1.66,
+        morph = .49, color = .51, echo = .59, detune = 27, fm = 1.66,
         lfo = 2.68, motion = .57,
+        filter = {resonance = 1.43, depth = 1.31, velocity = .63, keytrack = .58,
+                  attack = .063, decay = .47, sustain = .27, release = .61},
+        shape = {loop = true, {time = .16, level = .87}, {time = .30, level = -.81},
+                 {time = .08, level = .22}, {time = .24, level = -.61}},
+        sample = .27, sample_file = "filament.wav",
+        grain = {size = .125, density = 33, position = .37, spray = .15},
+        mod = {{source = "shape", destination = "cutoff", amount = 1.10},
+               {source = "shape", destination = "grain_position", amount = .29}},
         scene = {mesh = "helix.obj", tint = 0x93d66d, accent = 0xf3adec, spin = -0.85, tilt = 0.14, aspect = 0.93, satellites = 4}
     },
     {
         name = "Cinder Rotor", wave_a = "saw", wave_b = "square",
         attack = .052, decay = .76, sustain = .77, release = .92,
-        morph = .39, color = .65, echo = .43, detune = 1200, fm = .35,
+        morph = .39, color = .51, echo = .43, detune = 1200, fm = .35,
         lfo = 7.00, motion = .39,
+        filter = {resonance = 1.87, depth = 1.34, velocity = .58, keytrack = .64,
+                  attack = .050, decay = .36, sustain = .26, release = .64},
+        shape = {loop = true, {time = .048, level = .88}, {time = .13, level = -.79},
+                 {time = .065, level = .51}, {time = .15, level = -.61}},
+        mod = {{source = "shape", destination = "cutoff", amount = 1.32},
+               {source = "shape", destination = "fm", amount = .61}},
         scene = {mesh = "fan.obj", tint = 0xcb6e64, accent = 0xffb282, spin = -1.2, tilt = 0.15, aspect = 0.84, satellites = 3}
     },
     {
         name = "Phantom Rhythm", wave_a = "triangle", wave_b = "noise",
         attack = .088, decay = 1.04, sustain = .73, release = 1.19,
-        morph = .20, color = .60, echo = .61, detune = 0, fm = .42,
+        morph = .20, color = .48, echo = .61, detune = 0, fm = .42,
         lfo = 3.48, motion = .25,
+        filter = {resonance = 1.34, depth = 1.08, velocity = .55, keytrack = .57,
+                  attack = .10, decay = .41, sustain = .34, release = .81},
+        shape = {loop = true, {time = .13, level = .72}, {time = .21, level = -.75},
+                 {time = .072, level = .49}, {time = .29, level = -.67}},
+        sample = .36, sample_file = "orchard-air.wav",
+        grain = {size = .14, density = 33, position = .54, spray = .20},
+        mod = {{source = "shape", destination = "cutoff", amount = 1.08},
+               {source = "shape", destination = "grain_position", amount = .30}},
         scene = {mesh = "relay.obj", tint = 0x8b79d0, accent = 0xa4e6dd, spin = -0.9, tilt = -0.4, aspect = 0.92, satellites = 5}
     },
     {
         name = "Darkroom Sweep", wave_a = "sine", wave_b = "square",
         attack = .32, decay = 1.28, sustain = .83, release = 1.87,
-        morph = .42, color = .41, echo = .54, detune = -12, fm = 2.43,
+        morph = .42, color = .36, echo = .54, detune = -12, fm = 2.43,
         lfo = 1.43, motion = .61,
+        filter = {resonance = 1.06, depth = 1.24, velocity = .49, keytrack = .47,
+                  attack = .37, decay = .55, sustain = .42, release = 1.22},
+        shape = {loop = true, {time = .43, level = -.62}, {time = .35, level = .91},
+                 {time = .58, level = -.77}},
+        sample = .31, sample_file = "orchard-air.wav",
+        grain = {size = .17, density = 25, position = .45, spray = .15},
+        mod = {{source = "shape", destination = "cutoff", amount = 1.32},
+               {source = "shape", destination = "grain_position", amount = .29}},
         scene = {mesh = "arch.obj", tint = 0xa063a3, accent = 0xfc8fae, spin = 0.5, tilt = 0.39, aspect = 0.94, satellites = 2}
     },
     {
         name = "Cascade Relay", wave_a = "triangle", wave_b = "saw",
         attack = .110, decay = .91, sustain = .76, release = 1.23,
-        morph = .57, color = .55, echo = .64, detune = 1200, fm = .92,
+        morph = .57, color = .44, echo = .64, detune = 1200, fm = .92,
         lfo = 4.64, motion = .52,
+        filter = {resonance = 1.58, depth = 1.60, velocity = .63, keytrack = .61,
+                  attack = .13, decay = .44, sustain = .24, release = .80},
+        shape = {loop = true, {time = .08, level = .86}, {time = .15, level = -.89},
+                 {time = .085, level = .52}, {time = .16, level = -.68}},
+        mod = {{source = "shape", destination = "cutoff", amount = 1.31},
+               {source = "shape", destination = "fm", amount = .73}},
         scene = {mesh = "relay.obj", tint = 0x67a9e2, accent = 0xb7f5ec, spin = 1.08, tilt = -0.45, aspect = 1.06, satellites = 1}
     },
     {
         name = "Transistor Tide", wave_a = "square", wave_b = "triangle",
         attack = .074, decay = 1.15, sustain = .68, release = .81,
-        morph = .56, color = .53, echo = .29, detune = 17, fm = .26,
+        morph = .56, color = .43, echo = .29, detune = 17, fm = .26,
         lfo = 5.24, motion = .55,
+        filter = {resonance = 1.67, depth = 1.24, velocity = .56, keytrack = .62,
+                  attack = .090, decay = .48, sustain = .29, release = .60},
+        shape = {loop = true, {time = .093, level = .80}, {time = .18, level = -.65},
+                 {time = .071, level = .33}, {time = .19, level = -.85}},
+        mod = {{source = "shape", destination = "cutoff", amount = 1.28},
+               {source = "shape", destination = "morph", amount = .25}},
         scene = {mesh = "cage.obj", tint = 0x6ab29a, accent = 0xe7db91, spin = 1.17, tilt = -0.52, aspect = 1.02, satellites = 1}
     },
     {
         name = "Aurora Gate", wave_a = "sine", wave_b = "triangle",
         attack = .18, decay = 1.76, sustain = .83, release = 1.73,
-        morph = .45, color = .64, echo = .62, detune = 1200, fm = 2.01,
+        morph = .45, color = .51, echo = .62, detune = 1200, fm = 2.01,
         lfo = 2.12, motion = .48,
+        filter = {resonance = 1.19, depth = 1.29, velocity = .50, keytrack = .45,
+                  attack = .24, decay = .67, sustain = .38, release = 1.21},
+        shape = {loop = true, {time = .105, level = .72}, {time = .27, level = -.73},
+                 {time = .09, level = .34}, {time = .29, level = -.64}},
+        sample = .37, sample_file = "filament.wav",
+        grain = {size = .16, density = 30, position = .41, spray = .16},
+        mod = {{source = "shape", destination = "cutoff", amount = 1.17},
+               {source = "shape", destination = "grain_position", amount = .34}},
         scene = {mesh = "arch.obj", tint = 0x79cbb8, accent = 0xd2a6f5, spin = -0.67, tilt = 0.24, aspect = 1.04, satellites = 2}
     },
 
@@ -656,29 +1030,47 @@ return {
     {
         name = "Thump Coil", wave_a = "sine", wave_b = "triangle",
         attack = .001, decay = .15, sustain = .01, release = .08,
-        morph = .32, color = .32, echo = .06, detune = -1200, fm = 1.05,
+        morph = .32, color = .28, echo = .06, detune = -1200, fm = 1.05,
         lfo = .30, motion = .04,
+        filter = {resonance = 1.13, depth = 1.31, velocity = .54, keytrack = .57,
+                  attack = .002, decay = .088, sustain = .03, release = .05},
+        shape = {{time = .005, level = 1}, {time = .061, level = 0}},
+        mod = {{source = "shape", destination = "pitch", amount = 20},
+               {source = "filter_env", destination = "fm", amount = .72}},
         scene = {mesh = "anvil.obj", tint = 0xeb9268, accent = 0xffd6a0, spin = -0.51, tilt = -0.2, aspect = 1.03, satellites = 5}
     },
     {
         name = "Dust Snare", wave_a = "triangle", wave_b = "noise",
         attack = .002, decay = .15, sustain = .03, release = .11,
-        morph = .79, color = .69, echo = .17, detune = 0, fm = .40,
+        morph = .79, color = .54, echo = .17, detune = 0, fm = .40,
         lfo = 3.5, motion = .13,
+        filter = {mode = "highpass", resonance = .82, depth = -.85, velocity = .36, keytrack = .17,
+                  attack = .002, decay = .092, sustain = .04, release = .07},
+        mod = {{source = "filter_env", destination = "morph", amount = .18},
+               {source = "velocity", destination = "fm", amount = .41}},
         scene = {mesh = "fan.obj", tint = 0xc4a888, accent = 0xf2dbaf, spin = 0.97, tilt = -0.32, aspect = 1.17, satellites = 1}
     },
     {
         name = "Circuit Hat", wave_a = "square", wave_b = "noise",
         attack = .001, decay = .05, sustain = .01, release = .04,
-        morph = .92, color = .89, echo = .10, detune = 1100, fm = .20,
+        morph = .92, color = .78, echo = .10, detune = 1100, fm = .20,
         lfo = 3.0, motion = .07,
+        filter = {mode = "highpass", resonance = .76, depth = -.68, velocity = .31, keytrack = .22,
+                  attack = .003, decay = .046, sustain = .08, release = .035},
+        mod = {{source = "velocity", destination = "morph", amount = .07},
+               {source = "filter_env", destination = "fm", amount = .5}},
         scene = {mesh = "cage.obj", tint = 0x9cc8ba, accent = 0xefecad, spin = 0.74, tilt = 0.17, aspect = 0.92, satellites = 3}
     },
     {
         name = "Glacial Rim", wave_a = "square", wave_b = "sine",
         attack = .001, decay = .08, sustain = .01, release = .15,
-        morph = .23, color = .77, echo = .27, detune = 851, fm = 2.38,
+        morph = .23, color = .51, echo = .27, detune = 851, fm = 2.38,
         lfo = .60, motion = .14,
+        filter = {mode = "highpass", resonance = 1.11, depth = -.80, velocity = .44, keytrack = .34,
+                  attack = .002, decay = .061, sustain = .04, release = .09},
+        shape = {{time = .005, level = 1}, {time = .037, level = 0}},
+        mod = {{source = "shape", destination = "pitch", amount = 6},
+               {source = "filter_env", destination = "fm", amount = .81}},
         scene = {mesh = "relay.obj", tint = 0x7dbce8, accent = 0xe3f9ff, spin = -0.43, tilt = -0.47, aspect = 0.84, satellites = 4}
     },
     {
@@ -686,6 +1078,11 @@ return {
         attack = .003, decay = .23, sustain = .01, release = .15,
         morph = .25, color = .49, echo = .18, detune = -1200, fm = 1.10,
         lfo = .20, motion = .04,
+        filter = {resonance = .94, depth = 1.49, velocity = .52, keytrack = .55,
+                  attack = .004, decay = .14, sustain = .11, release = .10},
+        shape = {{time = .006, level = 1}, {time = .084, level = 0}},
+        mod = {{source = "shape", destination = "pitch", amount = 12},
+               {source = "filter_env", destination = "morph", amount = .16}},
         scene = {mesh = "bell.obj", tint = 0xc6a47e, accent = 0xedbca2, spin = 0.55, tilt = -0.14, aspect = 1.13, satellites = 4}
     },
     {
@@ -693,20 +1090,34 @@ return {
         attack = .001, decay = .28, sustain = .02, release = .16,
         morph = .21, color = .51, echo = .22, detune = 484, fm = 2.10,
         lfo = .77, motion = .10,
+        filter = {resonance = 1.17, depth = 1.19, velocity = .64, keytrack = .53,
+                  attack = .003, decay = .17, sustain = .10, release = .13},
+        shape = {{time = .005, level = 1}, {time = .103, level = 0}},
+        mod = {{source = "shape", destination = "pitch", amount = 18},
+               {source = "filter_env", destination = "fm", amount = 1.02}},
         scene = {mesh = "anvil.obj", tint = 0xca7873, accent = 0xf5a976, spin = -0.44, tilt = -0.5, aspect = 1.11, satellites = 4}
     },
     {
         name = "Tin Shaker", wave_a = "sine", wave_b = "noise",
         attack = .003, decay = .08, sustain = .04, release = .09,
-        morph = .87, color = .82, echo = .16, detune = 0, fm = .63,
+        morph = .87, color = .73, echo = .16, detune = 0, fm = .63,
         lfo = 14, motion = .10,
+        filter = {mode = "highpass", resonance = .83, depth = -.79, velocity = .27, keytrack = .18,
+                  attack = .004, decay = .054, sustain = .08, release = .064},
+        mod = {{source = "filter_env", destination = "morph", amount = .11},
+               {source = "velocity", destination = "fm", amount = .33}},
         scene = {mesh = "petal.obj", tint = 0xa4b6bf, accent = 0xece2aa, spin = -1.47, tilt = -0.4, aspect = 1.16, satellites = 2}
     },
     {
         name = "Ring Anvil", wave_a = "sine", wave_b = "square",
         attack = .001, decay = .45, sustain = .01, release = .52,
-        morph = .23, color = .81, echo = .47, detune = 948, fm = 5.11,
+        morph = .23, color = .54, echo = .47, detune = 948, fm = 5.11,
         lfo = .48, motion = .07,
+        filter = {mode = "highpass", resonance = 1.13, depth = -.89, velocity = .40, keytrack = .28,
+                  attack = .002, decay = .27, sustain = .12, release = .31},
+        shape = {{time = .005, level = 1}, {time = .049, level = 0}},
+        mod = {{source = "shape", destination = "pitch", amount = 7},
+               {source = "filter_env", destination = "fm", amount = 1.24}},
         scene = {mesh = "bell.obj", tint = 0xac8ab5, accent = 0xf5b7a0, spin = 0.52, tilt = 0.11, aspect = 0.96, satellites = 5}
     },
 
@@ -730,6 +1141,12 @@ return {
         attack = .095, decay = .64, sustain = .68, release = 1.08,
         morph = .18, color = .67, echo = .57, detune = 802, fm = 4.38,
         lfo = 5.30, motion = .42,
+        filter = {resonance = 1.26, depth = 1.10, velocity = .49, keytrack = .63,
+                  attack = .13, decay = .36, sustain = .47, release = .77},
+        shape = {loop = true, {time = .10, level = .74}, {time = .21, level = -.83},
+                 {time = .16, level = .17}},
+        mod = {{source = "shape", destination = "pitch", amount = 3.2},
+               {source = "lfo", destination = "fm", amount = .9}},
         scene = {mesh = "relay.obj", tint = 0xc49f57, accent = 0xf7de8d, spin = -0.9, tilt = -0.32, aspect = 1.18, satellites = 2}
     },
     {
@@ -737,13 +1154,28 @@ return {
         attack = .90, decay = 2.14, sustain = .83, release = 3.37,
         morph = .37, color = .71, echo = .49, detune = 0, fm = .15,
         lfo = .27, motion = .36,
+        filter = {resonance = .93, depth = .81, velocity = .54, keytrack = .40,
+                  attack = 1.04, decay = 1.60, sustain = .51, release = 2.41},
+        shape = {loop = true, {time = 2.1, level = .63}, {time = 2.7, level = -.60}},
+        sample = .54, sample_file = "orchard-air.wav",
+        grain = {size = .19, density = 27, position = .48, spray = .23},
+        mod = {{source = "shape", destination = "grain_position", amount = .33},
+               {source = "lfo", destination = "sample", amount = .11}},
         scene = {mesh = "petal.obj", tint = 0xdb7968, accent = 0xf7b3a0, spin = -0.35, tilt = 0.34, aspect = 0.99, satellites = 1}
     },
     {
         name = "Magnetic Rain", wave_a = "square", wave_b = "sine",
         attack = .35, decay = 1.57, sustain = .67, release = 2.60,
-        morph = .55, color = .56, echo = .64, detune = 976, fm = 5.49,
-        lfo = 3.38, motion = .53, sample = .22, sample_file = "canopy.wav",
+        morph = .55, color = .33, echo = .64, detune = 976, fm = 5.49,
+        lfo = 3.38, motion = .53,
+        filter = {mode = "highpass", resonance = .87, depth = -.79, velocity = .43, keytrack = .51,
+                  attack = .45, decay = .95, sustain = .55, release = 1.64},
+        shape = {loop = true, {time = .79, level = .87}, {time = 1.2, level = -.66},
+                 {time = .61, level = .16}},
+        sample = .40, sample_file = "filament.wav",
+        grain = {size = .105, density = 39, position = .42, spray = .22},
+        mod = {{source = "shape", destination = "grain_position", amount = .38},
+               {source = "lfo", destination = "fm", amount = 1.31}},
         scene = {mesh = "cage.obj", tint = 0x8292cd, accent = 0xc7d9f6, spin = -0.8, tilt = 0.31, aspect = 1.0, satellites = 5}
     },
     {
@@ -751,6 +1183,12 @@ return {
         attack = 1.10, decay = 1.42, sustain = .79, release = 4.41,
         morph = .43, color = .47, echo = .68, detune = 638, fm = 4.70,
         lfo = .64, motion = .36,
+        filter = {resonance = 1.36, depth = .99, velocity = .41, keytrack = .36,
+                  attack = 1.28, decay = 1.64, sustain = .53, release = 3.1},
+        shape = {loop = true, {time = 1.8, level = -.65}, {time = 1.6, level = .96},
+                 {time = 1.1, level = -.13}},
+        mod = {{source = "shape", destination = "pitch", amount = 3.75},
+               {source = "shape", destination = "fm", amount = 1.18}},
         scene = {mesh = "arch.obj", tint = 0x635fae, accent = 0xc08ae3, spin = 0.37, tilt = -0.04, aspect = 1.11, satellites = 3}
     },
     {
@@ -758,6 +1196,12 @@ return {
         attack = .69, decay = 1.52, sustain = .84, release = 2.86,
         morph = .49, color = .43, echo = .56, detune = -608, fm = 3.08,
         lfo = .95, motion = .44,
+        filter = {resonance = 1.48, depth = 1.20, velocity = .45, keytrack = .51,
+                  attack = .82, decay = 1.24, sustain = .44, release = 2.11},
+        shape = {loop = true, {time = .83, level = .66}, {time = 1.62, level = -.85},
+                 {time = .95, level = .14}},
+        mod = {{source = "shape", destination = "pitch", amount = 4.5},
+               {source = "shape", destination = "cutoff", amount = .71}},
         scene = {mesh = "kite.obj", tint = 0x5e99bd, accent = 0xabcbf0, spin = 0.63, tilt = 0.43, aspect = 0.84, satellites = 5}
     },
     {

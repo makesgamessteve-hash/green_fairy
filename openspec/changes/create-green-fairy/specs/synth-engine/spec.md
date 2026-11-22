@@ -42,3 +42,10 @@ A preset SHALL be able to layer grains from an external WAV, with independently 
 #### Scenario: Sustain a granular texture
 - **WHEN** a note is held beyond the duration of the underlying WAV
 - **THEN** overlapping, windowed grains continue at note pitch until the voice releases
+
+### Requirement: Factory preset voicing
+Every factory preset SHALL use a resonant voice filter and at least one modulation route. Looping envelopes and granular layers SHALL be used where they suit the preset's musical role.
+
+#### Scenario: Browse tuned factory presets
+- **WHEN** a player auditions the factory presets
+- **THEN** each preset responds to its own filter and modulation settings, with looping and granular motion on selected textures and short envelopes on percussion

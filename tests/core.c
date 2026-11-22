@@ -237,11 +237,21 @@ static void granular_sample(void)
 
 static void factory_presets(const GF_Bank *bank)
 {
-    float signatures[GF_PATCHES][16];
+    float signatures[GF_PATCHES][16], sample[128];
+    size_t granular = 0, loops = 0;
+    for (size_t i = 0; i < sizeof(sample) / sizeof(*sample); ++i)
+        sample[i] = .45f * sinf(6.2831853f * i / 128);
     for (size_t i = 0; i < bank->count; ++i) {
         const GF_Patch *patch = &bank->patches[i];
+        CHECK(patch->filter.mode != GF_FILTER_LEGACY && patch->route_count > 0);
+        if (patch->grain.density > 0) {
+            CHECK(patch->sample_file[0] && patch->sample > 0);
+            ++granular;
+        }
+        if (patch->shape.loop) ++loops;
         gf_init(&synth, 48000);
         gf_set_patch(&synth, patch);
+        if (patch->sample_file[0]) gf_set_sample(&synth, sample, sizeof(sample) / sizeof(*sample));
         gf_note_on(&synth, 60, .8f);
         gf_render(&synth, output, 8000);
         CHECK(energy(output, 16000) > .1f);
@@ -251,7 +261,13 @@ static void factory_presets(const GF_Bank *bank)
             CHECK(bank->scenes[i].tint != bank->scenes[previous].tint);
             CHECK(memcmp(signatures[i], signatures[previous], sizeof(signatures[i])) != 0);
         }
+        gf_set_patch(&synth, patch);
+        if (patch->sample_file[0]) gf_set_sample(&synth, sample, sizeof(sample) / sizeof(*sample));
+        gf_note_on(&synth, 36, .8f);
+        gf_render(&synth, output, 8000);
+        CHECK(energy(output, 16000) > .1f);
     }
+    CHECK(granular == 21 && loops == 36);
 }
 
 static void lua_bank(const char *asset)

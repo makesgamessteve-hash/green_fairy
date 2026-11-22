@@ -13,5 +13,6 @@
   "graphics/spire.obj",
   "scripts/bank.lua",
   "sounds/canopy.wav",
+  "sounds/filament.wav",
   "sounds/orchard-air.wav"
 ]

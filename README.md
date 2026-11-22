@@ -18,7 +18,7 @@ The web app uses larger touch keys on mobile. The browser enables audio after th
 
 Each preset changes the Signal Field's model, palette, rotation, and orbiting fragments. Played notes pulse the model. Morph increases its vertical motion, Color shifts its material toward the accent color, and Echo spreads the orbits.
 
-Try **Glass Canopy** for a slow resonant sweep, **Vesper Bass** for a punchy envelope, **Clock Coral** for a repeating modulation pattern, or **Night Orchard** and **Blacklight** for granular textures. The Signal Field identifies resonant filter modes and granular presets.
+All 100 factory presets use resonant voice filters and modulation routes tuned to their sound. Thirty-six use looping shapes and 21 use granular layers. Try **Vesper Bass** for an envelope with a sharp attack, **Thump Coil** for a short pitch drop, **Neon Weave** for a repeating sweep, and **Rain on Glass** for a granular texture built from a new glass-strike WAV. The Signal Field identifies resonant filter modes and granular presets.
 
 ## Synth components
 
