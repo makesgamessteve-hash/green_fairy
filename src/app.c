@@ -30,7 +30,10 @@ typedef struct {
     Contact touch[CONTACT_COUNT], mouse, xr[CONTACT_COUNT];
     unsigned held[GF_NOTES];
     int key_note[SDL_SCANCODE_COUNT];
-    int octave;
+    GF_Tuning custom_tuning, tuning_draft;
+    int octave, tuning_index, tuning_focus;
+    TuningOverlay tuning_overlay;
+    char tuning_path[4096];
     size_t selected;
     float controls[GF_CONTROL_COUNT];
     float *sample;
@@ -103,6 +106,65 @@ static float *load_sample(const char *name, size_t *frames)
     return (float *)converted;
 }
 
+static const GF_Tuning *active_tuning(void)
+{
+    return app.tuning_index == GF_CUSTOM_TUNING ? &app.custom_tuning : &gf_tunings[app.tuning_index];
+}
+
+#ifdef __EMSCRIPTEN__
+EM_JS(void, save_web_tuning, (int index, int octave, int root, unsigned degrees), {
+    try {
+        localStorage.setItem("green-fairy.tuning.v1", JSON.stringify([index, octave, root, degrees]));
+    } catch (_) {}
+})
+#endif
+
+static void save_tuning(void)
+{
+#ifdef __EMSCRIPTEN__
+    save_web_tuning(app.tuning_index, app.octave, app.custom_tuning.root, app.custom_tuning.degrees);
+#else
+    if (!app.tuning_path[0]) return;
+    char data[80];
+    const int length = SDL_snprintf(data, sizeof(data), "%d %d %d %lu\n",
+        app.tuning_index, app.octave, app.custom_tuning.root, (unsigned long)app.custom_tuning.degrees);
+    if (!SDL_SaveFile(app.tuning_path, data, (size_t)length)) SDL_Log("Save tuning: %s", SDL_GetError());
+#endif
+}
+
+static void restore_tuning(int index, int octave, int root, unsigned degrees)
+{
+    const GF_Tuning custom = {degrees, root};
+    if (index < 0 || index >= GF_TUNING_COUNT || !gf_tuning_valid(&custom)) return;
+    app.custom_tuning = custom;
+    app.tuning_index = index;
+    app.octave = gf_tuning_octave(active_tuning(), octave);
+}
+
+static void init_tuning(bool smoke)
+{
+    app.custom_tuning = gf_tunings[0];
+    app.octave = 2;
+    if (smoke) return;
+#ifndef __EMSCRIPTEN__
+    char *path = SDL_GetPrefPath("Green Fairy", "Instrument");
+    if (!path) return;
+    const int size = SDL_snprintf(app.tuning_path, sizeof(app.tuning_path), "%stuning.txt", path);
+    SDL_free(path);
+    if (size < 0 || (size_t)size >= sizeof(app.tuning_path)) {
+        app.tuning_path[0] = 0;
+        return;
+    }
+    char *data = SDL_LoadFile(app.tuning_path, NULL);
+    if (!data) return;
+    int index, octave, root;
+    unsigned degrees;
+    if (sscanf(data, "%d%d%d%u", &index, &octave, &root, &degrees) == 4)
+        restore_tuning(index, octave, root, degrees);
+    SDL_free(data);
+#endif
+}
+
 static void end_note(int note)
 {
     if (note < 0 || app.held[note] == 0) return;
@@ -117,7 +179,8 @@ static void start_note(int note, float velocity)
 {
     if (app.held[note]++ == 0) {
         audio_lock();
-        gf_note_on(&app.synth, note, velocity);
+        const float pitch = gf_tuning_cents(active_tuning(), app.octave, note) / 100.f;
+        gf_note_on_pitch(&app.synth, note, pitch, velocity);
         audio_unlock();
     }
 }
@@ -140,6 +203,87 @@ static void release_input(void)
         end_note(app.key_note[i]);
         app.key_note[i] = -1;
     }
+}
+
+static void select_tuning(int index)
+{
+    release_input();
+    app.tuning_index = index;
+    app.octave = gf_tuning_octave(active_tuning(), app.octave);
+    app.tuning_overlay = GF_TUNING_CLOSED;
+    save_tuning();
+}
+
+static void shift_octave(int direction)
+{
+    const int octave = gf_tuning_octave(active_tuning(), app.octave + direction);
+    if (octave == app.octave) return;
+    release_input();
+    app.octave = octave;
+    save_tuning();
+}
+
+static void open_builder(void)
+{
+    release_input();
+    app.tuning_draft = *active_tuning();
+    app.tuning_focus = 1;
+    app.tuning_overlay = GF_TUNING_BUILDER;
+}
+
+static void apply_builder(void)
+{
+    if (!gf_tuning_valid(&app.tuning_draft)) return;
+    app.custom_tuning = app.tuning_draft;
+    select_tuning(GF_CUSTOM_TUNING);
+}
+
+static void shift_root(int direction)
+{
+    app.tuning_draft.root = (app.tuning_draft.root + 12 + direction) % 12;
+}
+
+static void toggle_degree(int index)
+{
+    if (index > 0) app.tuning_draft.degrees ^= UINT32_C(1) << index;
+}
+
+static bool tuning_press(const Layout *layout, float x, float y)
+{
+    if (app.tuning_overlay == GF_TUNING_MENU) {
+        app.tuning_overlay = GF_TUNING_CLOSED;
+        for (int i = 0; i < GF_TUNING_COUNT; ++i) {
+            if (inside(panel_tuning_option(layout, i), x, y)) {
+                select_tuning(i);
+                break;
+            }
+        }
+        return true;
+    }
+    if (app.tuning_overlay == GF_TUNING_BUILDER) {
+        const TuningBuilder b = panel_tuning_builder(layout);
+        if (inside(b.cancel, x, y)) app.tuning_overlay = GF_TUNING_CLOSED;
+        else if (inside(b.apply, x, y)) apply_builder();
+        else if (inside(b.lower, x, y)) shift_root(-1);
+        else if (inside(b.raise, x, y)) shift_root(1);
+        else for (int i = 0; i < GF_DEGREES; ++i) {
+            if (!inside(panel_tuning_degree(&b, i), x, y)) continue;
+            app.tuning_focus = i;
+            toggle_degree(i);
+            break;
+        }
+        return true;
+    }
+    const TuningBar bar = panel_tuning_bar(layout);
+    if (inside(bar.select, x, y)) {
+        release_input();
+        app.tuning_focus = app.tuning_index;
+        app.tuning_overlay = GF_TUNING_MENU;
+    } else if (inside(bar.build, x, y)) open_builder();
+    else if (inside(bar.lower, x, y)) shift_octave(-1);
+    else if (inside(bar.raise, x, y)) shift_octave(1);
+    else return false;
+    return true;
 }
 
 static void select_patch(size_t index)
@@ -218,8 +362,7 @@ static void update_control(const Layout *layout, int control, float x)
 
 static void update_note(Contact *contact, const Layout *layout, float x, float y)
 {
-    const int key = panel_note(layout, x, y);
-    const int note = key < 0 ? -1 : app.octave + key;
+    const int note = panel_note(layout, x, y);
     if (note == contact->note) return;
     end_note(contact->note);
     contact->note = note;
@@ -238,6 +381,7 @@ static void pointer(Contact *contact, const Layout *layout, int phase, float x, 
         else update_note(contact, layout, x, y);
         return;
     }
+    if (tuning_press(layout, x, y)) return;
     const struct { Rect bounds; int step; } navigation[] = {
         {layout->jump_back, -GF_PATCH_JUMP}, {layout->previous, -1},
         {layout->next, 1}, {layout->jump_forward, GF_PATCH_JUMP}
@@ -294,13 +438,52 @@ static void resize(void)
     app.offset_y = (height - app.layout.height * app.zoom) / 2;
 }
 
+static int letter_slot(const SDL_KeyboardEvent *event)
+{
+    SDL_Keycode code = event->key;
+    const SDL_Scancode scan = event->scancode;
+    if (scan >= SDL_SCANCODE_1 && scan <= SDL_SCANCODE_0)
+        return GF_PLAY_KEYS - 10 + scan - SDL_SCANCODE_1;
+    if (scan >= SDL_SCANCODE_KP_1 && scan <= SDL_SCANCODE_KP_0)
+        return GF_PLAY_KEYS - 10 + scan - SDL_SCANCODE_KP_1;
+    if (code == SDLK_UNKNOWN && scan >= SDL_SCANCODE_A && scan <= SDL_SCANCODE_Z)
+        code = SDLK_A + scan - SDL_SCANCODE_A;
+    if (code >= SDLK_A && code <= SDLK_Z) code = 'A' + code - SDLK_A;
+    else if (code < SDLK_0 || code > SDLK_9) return -1;
+    const char *binding = strchr(gf_play_keys, (int)code);
+    return binding ? (int)(binding - gf_play_keys) : -1;
+}
+
+static void tuning_keyboard(SDL_Scancode scancode)
+{
+    if (scancode == SDL_SCANCODE_ESCAPE) {
+        app.tuning_overlay = GF_TUNING_CLOSED;
+        return;
+    }
+    if (app.tuning_overlay == GF_TUNING_MENU) {
+        if (scancode == SDL_SCANCODE_RETURN) select_tuning(app.tuning_focus);
+        else if (scancode == SDL_SCANCODE_UP)
+            app.tuning_focus = (app.tuning_focus + GF_TUNING_COUNT - 1) % GF_TUNING_COUNT;
+        else if (scancode == SDL_SCANCODE_DOWN) app.tuning_focus = (app.tuning_focus + 1) % GF_TUNING_COUNT;
+        return;
+    }
+    int offset = 0;
+    switch (scancode) {
+    case SDL_SCANCODE_LEFT: offset = -1; break;
+    case SDL_SCANCODE_RIGHT: offset = 1; break;
+    case SDL_SCANCODE_UP: offset = -GF_BUILDER_COLUMNS; break;
+    case SDL_SCANCODE_DOWN: offset = GF_BUILDER_COLUMNS; break;
+    case SDL_SCANCODE_LEFTBRACKET: shift_root(-1); break;
+    case SDL_SCANCODE_RIGHTBRACKET: shift_root(1); break;
+    case SDL_SCANCODE_SPACE: toggle_degree(app.tuning_focus); break;
+    case SDL_SCANCODE_RETURN: apply_builder(); break;
+    default: break;
+    }
+    app.tuning_focus = (app.tuning_focus + GF_DEGREES + offset) % GF_DEGREES;
+}
+
 static void keyboard_event(const SDL_KeyboardEvent *event)
 {
-    static const SDL_Scancode keys[] = {
-        SDL_SCANCODE_A, SDL_SCANCODE_W, SDL_SCANCODE_S, SDL_SCANCODE_E, SDL_SCANCODE_D,
-        SDL_SCANCODE_F, SDL_SCANCODE_T, SDL_SCANCODE_G, SDL_SCANCODE_Y, SDL_SCANCODE_H,
-        SDL_SCANCODE_U, SDL_SCANCODE_J, SDL_SCANCODE_K
-    };
     if (event->scancode <= SDL_SCANCODE_UNKNOWN || event->scancode >= SDL_SCANCODE_COUNT) return;
     int *note = &app.key_note[event->scancode];
     if (!event->down) {
@@ -308,7 +491,11 @@ static void keyboard_event(const SDL_KeyboardEvent *event)
         *note = -1;
         return;
     }
-    if (event->repeat) return;
+    if (event->repeat || (event->mod & (SDL_KMOD_CTRL | SDL_KMOD_ALT | SDL_KMOD_GUI))) return;
+    if (app.tuning_overlay != GF_TUNING_CLOSED) {
+        tuning_keyboard(event->scancode);
+        return;
+    }
     switch (event->scancode) {
     case SDL_SCANCODE_ESCAPE:
 #ifndef __EMSCRIPTEN__
@@ -321,26 +508,23 @@ static void keyboard_event(const SDL_KeyboardEvent *event)
     case SDL_SCANCODE_DOWN: step_patch(1); return;
     case SDL_SCANCODE_PAGEUP: step_patch(-GF_PATCH_JUMP); return;
     case SDL_SCANCODE_PAGEDOWN: step_patch(GF_PATCH_JUMP); return;
-    case SDL_SCANCODE_R:
 #ifndef __EMSCRIPTEN__
-        reload_bank();
-#else
-        status("Refresh the page to reload assets");
+    case SDL_SCANCODE_F5: reload_bank(); return;
 #endif
-        return;
-    case SDL_SCANCODE_Z:
-    case SDL_SCANCODE_X:
+    case SDL_SCANCODE_LEFT: shift_octave(-1); return;
+    case SDL_SCANCODE_RIGHT: shift_octave(1); return;
+    case SDL_SCANCODE_RETURN:
         release_input();
-        app.octave = SDL_clamp(app.octave + (event->scancode == SDL_SCANCODE_X ? 12 : -12), 24, 84);
+        app.tuning_focus = app.tuning_index;
+        app.tuning_overlay = GF_TUNING_MENU;
         return;
+    case SDL_SCANCODE_SPACE: open_builder(); return;
     default: break;
     }
-    for (int i = 0; i < GF_KEY_COUNT; ++i)
-        if (event->scancode == keys[i] && *note < 0) {
-            *note = app.octave + i;
-            start_note(*note, (event->mod & SDL_KMOD_SHIFT) ? 1.f : .86f);
-            break;
-        }
+    if (*note < 0) {
+        *note = letter_slot(event);
+        if (*note >= 0) start_note(*note, (event->mod & SDL_KMOD_SHIFT) ? 1.f : .86f);
+    }
 }
 
 static void events(void)
@@ -390,7 +574,9 @@ static PanelView view(void)
     audio_unlock();
     return (PanelView){
         .bank = &app.bank, .mesh = app.scene_mesh, .prism = &app.prism,
-        .selected = app.selected, .octave = app.octave,
+        .selected = app.selected, .octave = app.octave, .tuning = active_tuning(),
+        .draft = &app.tuning_draft, .tuning_index = app.tuning_index,
+        .tuning_focus = app.tuning_focus, .tuning_overlay = app.tuning_overlay,
         .voices = app.voices, .held = app.held, .controls = app.controls, .peak = app.peak,
         .time = (SDL_GetTicks() - app.scene_started) / 1000.f, .status = app.status
     };
@@ -420,7 +606,7 @@ static void frame_loop(void)
     if (app.running && !app.immersed && !app.graphics_suspended) render_window();
 }
 
-static bool initialize(void)
+static bool initialize(bool smoke)
 {
     const bool use_audio = SDL_Init(SDL_INIT_AUDIO);
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) return false;
@@ -462,7 +648,7 @@ static bool initialize(void)
                                               audio_callback, &app.synth);
         if (app.audio) SDL_ResumeAudioStreamDevice(app.audio);
     }
-    app.octave = 60;
+    init_tuning(smoke);
     for (int i = 0; i < SDL_SCANCODE_COUNT; ++i) app.key_note[i] = -1;
     if (!reload_bank()) {
         app.bank.patches[0] = gf_default_patch();
@@ -521,6 +707,22 @@ EMSCRIPTEN_KEEPALIVE void gf_web_release(void)
 EMSCRIPTEN_KEEPALIVE int gf_web_ready(void) { return app.ready; }
 EMSCRIPTEN_KEEPALIVE int gf_web_touch(void) { return app.layout.touch; }
 EMSCRIPTEN_KEEPALIVE int gf_web_patch(void) { return (int)app.selected; }
+EMSCRIPTEN_KEEPALIVE int gf_web_tuning(void) { return app.tuning_index; }
+EMSCRIPTEN_KEEPALIVE int gf_web_tuning_overlay(void) { return app.tuning_overlay; }
+EMSCRIPTEN_KEEPALIVE int gf_web_tuning_cents(int key)
+{
+    return key >= 0 && key < GF_PLAY_KEYS ? gf_tuning_cents(active_tuning(), app.octave, key) : -1;
+}
+EMSCRIPTEN_KEEPALIVE int gf_web_key_held(int key)
+{
+    return key >= 0 && key < GF_PLAY_KEYS && app.held[key] > 0;
+}
+EMSCRIPTEN_KEEPALIVE void gf_web_restore_tuning(int index, int octave, int root, unsigned degrees)
+{
+    release_input();
+    restore_tuning(index, octave, root, degrees);
+}
+
 EMSCRIPTEN_KEEPALIVE int gf_web_held(void)
 {
     int count = 0;
@@ -594,12 +796,12 @@ static bool smoke_test(void)
     const Uint64 deadline = SDL_GetTicks() + 2500;
     do {
         frame_loop();
-        if (app.held[60] && app.peak > .008f) {
+        if (app.held[7] && app.peak > .008f) {
             press.key.type = SDL_EVENT_KEY_UP;
             press.key.down = false;
             if (!SDL_PushEvent(&press)) return false;
             frame_loop();
-            if (app.held[60]) return false;
+            if (app.held[7]) return false;
             step_patch(-1);
             if (app.selected != GF_PATCHES - 1) return false;
             step_patch(1);
@@ -615,7 +817,8 @@ static bool smoke_test(void)
 
 int main(int argc, char **argv)
 {
-    if (!initialize()) {
+    const bool smoke = argc > 1 && strcmp(argv[1], "--smoke") == 0;
+    if (!initialize(smoke)) {
         SDL_Log("Green Fairy startup failed: %s", SDL_GetError());
         cleanup();
         return 1;
@@ -625,7 +828,7 @@ int main(int argc, char **argv)
     (void)argv;
     emscripten_set_main_loop(frame_loop, 0, true);
 #else
-    if (argc > 1 && strcmp(argv[1], "--smoke") == 0) {
+    if (smoke) {
         const bool passed = smoke_test();
         if (!passed) SDL_Log("Green Fairy smoke test failed");
         cleanup();

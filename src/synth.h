@@ -68,7 +68,7 @@ typedef struct {
     int note;
     uint64_t age;
     GF_Envelope amp, filter_env;
-    float frequency, phase_a, phase_b, velocity;
+    float pitch, frequency, phase_a, phase_b, velocity;
     double sample_pos;
     float shape_level, shape_step;
     unsigned shape_index, shape_frames;
@@ -97,6 +97,7 @@ void gf_set_patch(GF_Synth *synth, const GF_Patch *patch);
 void gf_set_sample(GF_Synth *synth, const float *sample, size_t length);
 void gf_control(GF_Synth *synth, GF_Control control, float value);
 void gf_note_on(GF_Synth *synth, int note, float velocity);
+void gf_note_on_pitch(GF_Synth *synth, int note, float pitch, float velocity);
 void gf_note_off(GF_Synth *synth, int note);
 void gf_all_notes_off(GF_Synth *synth);
 void gf_render(GF_Synth *synth, float *stereo, size_t frames);

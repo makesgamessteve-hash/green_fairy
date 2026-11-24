@@ -25,3 +25,25 @@ The instrument SHALL support physical key bindings and on-screen controls, and S
 #### Scenario: Play on a mobile browser
 - **WHEN** a touch device opens the web instrument and taps a key
 - **THEN** the layout provides touch-sized keys and the instrument plays and releases the note
+
+### Requirement: Scale-locked performance keyboard
+The instrument SHALL map the 26 letters and 10 digits to consecutive pitches in the selected tuning. Mouse, touch, and XR pads SHALL use the same mapping and display each pitch.
+
+#### Scenario: Play a multi-octave scale
+- **WHEN** the player selects C Major and plays Z through 0 in the default register
+- **THEN** the notes ascend by C-major degrees from C2 to C7
+
+#### Scenario: Select an Arabic tuning
+- **WHEN** the player chooses D Bayati from the dropdown
+- **THEN** the keyboard plays the quarter-tone scale, including the second degree 150 cents above the root
+
+### Requirement: Custom tuning builder
+The player SHALL be able to select a root and toggle 50-cent intervals. The instrument SHALL save the selected tuning, register, and applied custom tuning across sessions.
+
+#### Scenario: Apply and recall a custom tuning
+- **WHEN** the player enables at least four degrees including the root and applies the draft
+- **THEN** the keyboard adopts the custom pitches and restores the selection on the next launch
+
+#### Scenario: Keep all keys in range
+- **WHEN** the player selects a sparse tuning or shifts the register beyond its limits
+- **THEN** all 36 key pitches stay inside the supported MIDI-equivalent pitch range

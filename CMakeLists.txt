@@ -17,7 +17,7 @@ list(REMOVE_ITEM lua_sources "${lua_SOURCE_DIR}/src/lua.c" "${lua_SOURCE_DIR}/sr
 add_library(gf_lua STATIC ${lua_sources})
 target_include_directories(gf_lua PUBLIC "${lua_SOURCE_DIR}/src")
 
-add_library(gf_core STATIC src/synth.c src/bank.c)
+add_library(gf_core STATIC src/synth.c src/bank.c src/tuning.c)
 set_target_properties(gf_core PROPERTIES C_EXTENSIONS OFF)
 target_include_directories(gf_core PUBLIC src)
 target_link_libraries(gf_core PRIVATE gf_lua)
@@ -55,7 +55,7 @@ if(GF_BUILD_APP)
         URL_HASH SHA256=73eeeec0d3235ef75f310bd2bb758622157abfa05da65771656579a7dfeeba05)
     FetchContent_MakeAvailable(SDL3)
 
-    add_executable(green-fairy src/app.c src/draw.c src/panel.c)
+    add_executable(green-fairy src/app.c src/draw.c src/panel.c src/tuning_panel.c)
     set_target_properties(green-fairy PROPERTIES C_EXTENSIONS OFF)
     if(WIN32)
         set_target_properties(green-fairy PROPERTIES WIN32_EXECUTABLE ON)

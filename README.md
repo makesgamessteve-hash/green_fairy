@@ -6,12 +6,14 @@ Green Fairy is a standalone 12-voice software synthesizer with 100 presets, incl
 
 | Action | Keyboard | On-screen |
 | --- | --- | --- |
-| Play C through the next C | `A W S E D F T G Y H U J K` | Click, tap, or slide on the keys |
+| Play the selected tuning | All letters and digits | Click, tap, or slide across the 36 pads |
 | Accent a note | Hold Shift while playing | |
+| Change tuning | Enter, then Up / Down and Enter | Tuning dropdown |
+| Build a tuning | Space | Build |
 | Change presets | Up / Down | Preset list or `<` / `>` |
 | Jump ten presets | Page Up / Page Down | `<<` / `>>` |
-| Shift the keyboard one octave | `Z` / `X` | |
-| Reload an edited patch bank | `R` on desktop | Refresh on the web |
+| Shift the keyboard one octave | Left / Right | `-` / `+` |
+| Reload an edited patch bank | F5 on desktop | Refresh on the web |
 | Shape the sound | | Drag Morph, Color, or Echo |
 
 The web app uses larger touch keys on mobile. The browser enables audio after the first interaction. **Enter VR** appears when the browser supports immersive WebXR. In VR, aim a controller at the instrument and press the trigger to play or adjust a control.
@@ -19,6 +21,18 @@ The web app uses larger touch keys on mobile. The browser enables audio after th
 Each preset changes the Signal Field's model, palette, rotation, and orbiting fragments. Played notes pulse the model. Morph increases its vertical motion, Color shifts its material toward the accent color, and Echo spreads the orbits.
 
 All 100 factory presets use resonant voice filters and modulation routes tuned to their sound. Thirty-six use looping shapes and 21 use granular layers. Try **Vesper Bass** for an envelope with a sharp attack, **Thump Coil** for a short pitch drop, **Neon Weave** for a repeating sweep, and **Rain on Glass** for a granular texture built from a new glass-strike WAV. The Signal Field identifies resonant filter modes and granular presets.
+
+### Tunings
+
+The 36 keys play consecutive notes of the selected scale in this order.
+
+```text
+Z X C V B N M   A S D F G H J K L   Q W E R T Y U I O P   1 2 3 4 5 6 7 8 9 0
+```
+
+C Major (Dur) starts at C2 and spans five octaves. The menu also includes E Minor (Moll), D Hijaz (12-tone approximation), D Bayati with a 150-cent second, two pentatonic scales, G Blues, and C Chromatic. Narrower scales span more octaves, and the register is capped so every key stays within the engine's pitch range.
+
+**Build** lets you choose a root and toggle intervals in 50-cent steps within one octave. Keep at least four degrees, including the root, so all 36 keys fit in range. Notes marked `+` on the pads are 50 cents above the displayed pitch. In the builder, use the arrows to move, Space to toggle a degree, brackets to change root, Enter to apply, and Escape to cancel. The selected tuning, register, and a single custom tuning are saved locally.
 
 ## Synth components
 
@@ -122,13 +136,13 @@ The entry point and SDL integration are in `src/app.c`. The DSP and Lua loader a
 
 ## Verify
 
-GitHub Actions builds the native targets for Linux, Windows, and macOS, runs desktop and browser integration checks, and enforces 95% unit line and branch coverage across the C DSP and Lua loader. Use the following commands locally with GCC, gcovr, and a built web distribution.
+GitHub Actions builds the native targets for Linux, Windows, and macOS, runs desktop and browser integration checks, and enforces 95% unit line and branch coverage across the C DSP, tuning code, and Lua loader. Use the following commands locally with GCC, gcovr, and a built web distribution.
 
 ```sh
 cmake -S . -B build-core -DGF_BUILD_APP=OFF -DGF_COVERAGE=ON
 cmake --build build-core --parallel
 ctest --test-dir build-core --output-on-failure
-python3 -m gcovr --root . --filter 'src/(synth|bank)\.c$' --fail-under-line 95 --fail-under-branch 95 build-core
+python3 -m gcovr --root . --filter 'src/(synth|bank|tuning)\.c$' --fail-under-line 95 --fail-under-branch 95 build-core
 
 SDL_AUDIODRIVER=dummy LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a ./build/green-fairy --smoke
 python3 -m pip install playwright==1.65.2

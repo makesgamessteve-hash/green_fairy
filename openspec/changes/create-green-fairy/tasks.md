@@ -42,3 +42,9 @@
 - [x] 8.1 Configure the advanced filter and modulation features for all 100 factory presets.
 - [x] 8.2 Add looping or granular material where it suits each sound and check audio levels across registers.
 - [x] 8.3 Verify the updated bank, its external samples, and browser playback.
+
+## 9. Scale-locked keyboard
+
+- [x] 9.1 Map every letter and digit to consecutive scale degrees and show the pitches on the playable pads.
+- [x] 9.2 Add a shared tuning dropdown and a custom quarter-tone builder with local persistence.
+- [x] 9.3 Verify pitch calculation, all 36 key bindings, the builder, and touch and XR playback.

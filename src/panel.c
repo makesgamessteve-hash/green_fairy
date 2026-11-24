@@ -3,11 +3,6 @@
 #include <math.h>
 #include <stdio.h>
 
-static const int whites[] = {0, 2, 4, 5, 7, 9, 11, 12};
-static const int blacks[] = {1, 3, 6, 8, 10};
-static const int black_slots[] = {1, 2, 4, 5, 6};
-static const char *const bindings[] = {"A", "W", "S", "E", "D", "F", "T", "G", "Y", "H", "U", "J", "K"};
-static const char *const notes[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C"};
 static const char *const labels[] = {"MORPH", "COLOR", "ECHO"};
 static const char *const hints[] = {"OSCILLATOR BLEND", "FILTER CUTOFF", "STEREO DELAY"};
 
@@ -25,10 +20,10 @@ Layout panel_layout(bool touch, bool landscape)
     if (touch) {
         return (Layout){
             .width = 420, .height = 740, .touch = true,
-            .scene = {16, 80, 388, 218}, .bank = {16, 310, 388, 94},
-            .controls = {{16, 414, 124, 96}, {148, 414, 124, 96}, {280, 414, 124, 96}},
-            .keys = {19, 555, 382, 143}, .previous = {84, 349, 52, 46}, .next = {284, 349, 52, 46},
-            .jump_back = {26, 349, 52, 46}, .jump_forward = {342, 349, 52, 46}
+            .scene = {16, 80, 388, 190}, .bank = {16, 282, 388, 94},
+            .controls = {{16, 386, 124, 96}, {148, 386, 124, 96}, {280, 386, 124, 96}},
+            .keys = {19, 527, 382, 171}, .previous = {84, 321, 52, 46}, .next = {284, 321, 52, 46},
+            .jump_back = {26, 321, 52, 46}, .jump_forward = {342, 321, 52, 46}
         };
     }
     return (Layout){
@@ -37,29 +32,6 @@ Layout panel_layout(bool touch, bool landscape)
         .keys = {39, 612, 922, 86}, .previous = {741, 388, 36, 35}, .next = {870, 388, 36, 35},
         .jump_back = {690, 388, 45, 35}, .jump_forward = {912, 388, 45, 35}
     };
-}
-
-Rect panel_key(const Layout *layout, int semitone)
-{
-    const Rect r = layout->keys;
-    const float cell = r.w / GF_WHITE_COUNT;
-    for (int i = 0; i < GF_WHITE_COUNT; ++i)
-        if (semitone == whites[i]) return (Rect){r.x + i * cell, r.y, cell - 2, r.h};
-    for (int i = 0; i < 5; ++i)
-        if (semitone == blacks[i]) {
-            const float w = cell * (layout->touch ? .65f : .57f);
-            return (Rect){r.x + black_slots[i] * cell - w / 2, r.y, w, r.h * .62f};
-        }
-    return (Rect){0};
-}
-
-int panel_note(const Layout *layout, float x, float y)
-{
-    for (int i = 0; i < 5; ++i)
-        if (inside(panel_key(layout, blacks[i]), x, y)) return blacks[i];
-    for (int i = 0; i < GF_WHITE_COUNT; ++i)
-        if (inside(panel_key(layout, whites[i]), x, y)) return whites[i];
-    return -1;
 }
 
 size_t panel_first_patch(size_t selected, size_t count)
@@ -286,47 +258,6 @@ static void parameters(const Layout *l, const PanelView *v)
     }
 }
 
-static void key(const Layout *l, const PanelView *v, int semitone, bool black)
-{
-    const Rect r = panel_key(l, semitone);
-    const bool active = v->held[v->octave + semitone] > 0;
-    const unsigned top = active ? 0xc3df78 : (black ? 0x334338 : 0xdce4ce);
-    const unsigned base = active ? 0x9bb458 : (black ? 0x121f1b : 0xadbea8);
-    shade(r, ink(top), ink(base));
-    frame(r, ink(black ? 0x0e1b16 : 0x718572));
-    box((Rect){r.x + 3, r.y + r.h - 4, r.w - 6, 2}, ink(black ? 0x526456 : 0x758b75));
-    const float size = black && l->touch ? 11 : 13;
-    const Color color = ink(black && !active ? 0xd5e1ca : 0x26392d);
-    center_text(r.x, r.y + r.h - size - (l->touch ? 14 : 10), r.w, size, color,
-                l->touch ? notes[semitone] : bindings[semitone]);
-}
-
-static void keyboard(const Layout *l, const PanelView *v)
-{
-    const Rect k = l->keys;
-    const Rect shelf = {l->scene.x, k.y - 37, l->width - l->scene.x * 2, k.h + 46};
-    instrument_panel(shelf);
-    text(k.x + 1, k.y - 26, 14, ink(0xb8c9aa), l->touch ? "TOUCH KEYS" : "PLAY KEYS");
-#ifdef __EMSCRIPTEN__
-    const char *keys_help = "A-K TO PLAY   /   Z-X OCTAVE";
-#else
-    const char *keys_help = "A-K TO PLAY   /   Z-X OCTAVE   /   R RELOAD";
-#endif
-    const char *help = l->touch ? "TAP OR SLIDE" : keys_help;
-    text(k.x + k.w - text_width(12, help), k.y - 25, 12, ink(0x9aafa1), help);
-    for (int i = 0; i < GF_WHITE_COUNT; ++i) key(l, v, whites[i], false);
-    for (int i = 0; i < 5; ++i) key(l, v, blacks[i], true);
-    char octave[32];
-    snprintf(octave, sizeof(octave), "C%d - C%d", v->octave / 12 - 1, v->octave / 12);
-    const float right = l->width - l->scene.x;
-    text(right - text_width(11, octave), l->height - 22, 11, ink(0x97ab98), octave);
-    if (v->status && v->status[0])
-        fit_text(l->scene.x, l->height - 23, l->width - l->scene.x * 2 - 68,
-                 12, ink(0xe7cb86), v->status);
-    else
-        text(l->scene.x, l->height - 22, 11, ink(0x97ab98), "GREEN FAIRY  /  INSTRUMENT");
-}
-
 void panel_draw(const Layout *l, const PanelView *v)
 {
     shade((Rect){0, 0, l->width, l->height}, ink(0x14231e), ink(0x0e1816));
@@ -334,5 +265,5 @@ void panel_draw(const Layout *l, const PanelView *v)
     visualizer(l, v);
     patches(l, v);
     parameters(l, v);
-    keyboard(l, v);
+    panel_draw_tuning(l, v);
 }

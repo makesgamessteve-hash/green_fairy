@@ -60,6 +60,11 @@ var Module = {
                 statusMessage.textContent = startupError || "Green Fairy could not initialize WebGL 2.";
                 return;
             }
+            try {
+                const saved = JSON.parse(localStorage.getItem("green-fairy.tuning.v1"));
+                if (Array.isArray(saved) && saved.length === 4 && saved.every(Number.isSafeInteger))
+                    Module._gf_web_restore_tuning(...saved);
+            } catch (_) {}
             statusMessage.hidden = true;
             new ResizeObserver(resizeInstrument).observe(canvas);
             coarsePointer.addEventListener("change", resizeInstrument);

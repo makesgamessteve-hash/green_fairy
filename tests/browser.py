@@ -154,11 +154,11 @@ def mobile(browser, url, screenshots):
     assert page.evaluate("Module._gf_web_touch()") == 1
     if screenshots:
         page.screenshot(path=screenshots / "mobile.png")
-    page.touchscreen.tap(*point(page, 368, 372, 420))
+    page.touchscreen.tap(*point(page, 368, 344, 420))
     page.wait_for_function("Module._gf_web_patch() === 10")
-    page.touchscreen.tap(*point(page, 52, 372, 420))
+    page.touchscreen.tap(*point(page, 52, 344, 420))
     page.wait_for_function("Module._gf_web_patch() === 0")
-    page.touchscreen.tap(*point(page, 310, 372, 420))
+    page.touchscreen.tap(*point(page, 310, 344, 420))
     page.wait_for_function("Module._gf_web_patch() === 1")
 
     cdp = page.context.new_cdp_session(page)
@@ -169,12 +169,68 @@ def mobile(browser, url, screenshots):
     page.wait_for_function("Module._gf_web_held() === 1 && Module._gf_web_peak() > .012")
     cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
     page.wait_for_function("Module._gf_web_held() === 0")
+    page.touchscreen.tap(*point(page, 112, 503, 420))
+    page.wait_for_function("Module._gf_web_tuning_overlay() === 1")
+    page.touchscreen.tap(*point(page, 112, 321, 420))
+    page.wait_for_function("Module._gf_web_tuning() === 3")
     page.set_viewport_size({"width": 844, "height": 390})
     page.wait_for_function("document.querySelector('#canvas').width === " +
                            "document.querySelector('#canvas').clientWidth * devicePixelRatio")
     page.touchscreen.tap(*point(page, 721, 137, 820, 454))
     assert page.evaluate("Module._gf_web_touch()") == 1
     page.wait_for_function("Module._gf_web_patch() === 2")
+    assert not errors, errors
+    page.close()
+
+
+def tuning(browser, url, screenshots):
+    page = browser.new_page(viewport={"width": 1160, "height": 834})
+    errors = load(page, url)
+    page.mouse.click(*point(page, 146, 590))
+    page.wait_for_function("Module._gf_web_tuning_overlay() === 1")
+    page.mouse.click(*point(page, 146, 361))
+    page.wait_for_function("Module._gf_web_tuning() === 1 && Module._gf_web_tuning_cents(0) === 4000")
+
+    for slot, key in enumerate("zxcvbnmasdfghjklqwertyuiop1234567890"):
+        page.keyboard.down(key)
+        page.wait_for_function("slot => Module._gf_web_key_held(slot)", arg=slot)
+        page.keyboard.up(key)
+        page.wait_for_function("slot => !Module._gf_web_key_held(slot)", arg=slot)
+    page.wait_for_function("Module._gf_web_held() === 0 && Module._gf_web_peak() > .01")
+    page.keyboard.down("0")
+    page.keyboard.down("Numpad0")
+    page.keyboard.up("0")
+    page.wait_for_function("Module._gf_web_key_held(35) && Module._gf_web_held() === 1")
+    page.keyboard.up("Numpad0")
+    page.wait_for_function("Module._gf_web_held() === 0")
+
+    page.keyboard.down("a")
+    page.wait_for_function("Module._gf_web_held() === 1")
+    page.keyboard.press("Enter")
+    page.wait_for_function("Module._gf_web_held() === 0 && Module._gf_web_tuning_overlay() === 1")
+    page.keyboard.up("a")
+    page.keyboard.press("ArrowDown")
+    page.keyboard.press("Enter")
+    page.wait_for_function("Module._gf_web_tuning() === 2 && Module._gf_web_tuning_cents(1) === 3900")
+
+    page.keyboard.press("Enter")
+    page.keyboard.press("ArrowDown")
+    page.keyboard.press("Enter")
+    page.wait_for_function("Module._gf_web_tuning() === 3 && Module._gf_web_tuning_cents(1) === 3950")
+    page.mouse.click(*point(page, 302, 590))
+    page.wait_for_function("Module._gf_web_tuning_overlay() === 2")
+    if screenshots:
+        page.locator("#canvas").screenshot(path=screenshots / "tuning-builder.png")
+    page.mouse.click(*point(page, 428, 279))
+    page.mouse.click(*point(page, 372, 329))
+    page.mouse.click(*point(page, 711, 510))
+    page.wait_for_function("Module._gf_web_tuning() === 8 && Module._gf_web_tuning_cents(1) === 3950")
+    assert page.evaluate("Module._gf_web_tuning_cents(0)") == 3900
+    page.keyboard.press("ArrowRight")
+    page.wait_for_function("Module._gf_web_tuning_cents(0) === 5100")
+    page.reload(wait_until="networkidle")
+    page.wait_for_function("Module._gf_web_tuning() === 8 && Module._gf_web_tuning_cents(0) === 5100")
+    assert page.evaluate("Module._gf_web_tuning_cents(1)") == 5150
     assert not errors, errors
     page.close()
 
@@ -245,6 +301,8 @@ def test_project_site(site_root, chromium, screenshots):
             print("Desktop browser passed")
             mobile(browser, url, screenshots)
             print("Mobile touch passed")
+            tuning(browser, url, screenshots)
+            print("Tuning dropdown, 36 keys, and persisted builder passed")
             external_assets(browser, url)
             print("External assets passed")
             xr(browser, url)

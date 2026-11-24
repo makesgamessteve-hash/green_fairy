@@ -1,4 +1,4 @@
--- Edit or add a patch table, then press R in the desktop app or refresh the web page.
+-- Edit or add a patch table, then press F5 in the desktop app or refresh the web page.
 -- Use a WAV filename under assets/sounds to layer a sample tuned to C4.
 return {
     {

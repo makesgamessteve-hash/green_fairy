@@ -1,4 +1,5 @@
 #include "synth.h"
+#include "tuning.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -91,6 +92,69 @@ static void notes_and_controls(void)
     gf_all_notes_off(&synth);
     gf_render(&synth, output, 1);
     CHECK(gf_active_voices(&synth) == 0);
+}
+
+static void tuning(void)
+{
+    const char keys[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    for (size_t i = 0; i < sizeof(keys) - 1; ++i) {
+        const char *match = strchr(gf_play_keys, keys[i]);
+        CHECK(match && !strchr(match + 1, keys[i]));
+    }
+
+    CHECK(gf_tuning_cents(&gf_tunings[0], 2, 0) == 3600);
+    CHECK(gf_tuning_cents(&gf_tunings[0], 2, 35) == 9600);
+    CHECK(gf_tuning_cents(&gf_tunings[1], 2, 1) == 4200);
+    CHECK(gf_tuning_cents(&gf_tunings[2], 2, 1) == 3900);
+    CHECK(gf_tuning_cents(&gf_tunings[3], 2, 1) == 3950);
+    CHECK(gf_tuning_cents(&gf_tunings[4], 2, 35) == 12000);
+
+    for (int i = 0; i < GF_CUSTOM_TUNING; ++i) {
+        const GF_Tuning *scale = &gf_tunings[i];
+        CHECK(gf_tuning_valid(scale));
+        for (int octave = -1; octave <= 9; ++octave) {
+            const int start = gf_tuning_octave(scale, octave);
+            int last = -1;
+            for (int key = 0; key < GF_PLAY_KEYS; ++key) {
+                const int cents = gf_tuning_cents(scale, start, key);
+                CHECK(cents > last && cents <= 12700);
+                last = cents;
+            }
+        }
+    }
+
+    const GF_Tuning min = {0x841001, 11};
+    CHECK(gf_tuning_valid(&min));
+    CHECK(gf_tuning_size(min.degrees) == GF_MIN_DEGREES);
+    CHECK(gf_tuning_octave(&min, -200) == -1);
+    CHECK(gf_tuning_octave(&min, 2) == -1);
+    CHECK(gf_tuning_cents(&min, -1, 0) == 1100);
+    CHECK(gf_tuning_cents(&min, -1, 35) <= 12700);
+    CHECK(!gf_tuning_valid(&(GF_Tuning){0xff, -1}));
+    CHECK(!gf_tuning_valid(&(GF_Tuning){0xff, 12}));
+    CHECK(!gf_tuning_valid(&(GF_Tuning){0xfe, 0}));
+    CHECK(!gf_tuning_valid(&(GF_Tuning){0x10000ff, 0}));
+    CHECK(!gf_tuning_valid(&(GF_Tuning){7, 0}));
+    CHECK(strcmp(gf_pitch_class(9), "A") == 0);
+    char label[16];
+    gf_pitch_label(3600, label, sizeof(label));
+    CHECK(strcmp(label, "C2") == 0);
+    gf_pitch_label(3950, label, sizeof(label));
+    CHECK(strcmp(label, "D#2+") == 0);
+
+    gf_init(&synth, 48000);
+    gf_note_on_pitch(&synth, 1, NAN, 1);
+    gf_note_on_pitch(&synth, 1, -.5f, 1);
+    gf_note_on_pitch(&synth, 1, 127.5f, 1);
+    CHECK(gf_active_voices(&synth) == 0);
+    gf_note_on_pitch(&synth, 0, 69, 1);
+    gf_note_on_pitch(&synth, 1, 69.5f, .9f);
+    CHECK(synth.voices[0].frequency == 440);
+    CHECK(fabsf(synth.voices[1].frequency / 440 - exp2f(1.f / 24)) < 1e-6f);
+    gf_render(&synth, output, 1500);
+    CHECK(energy(output, 3000) > 1);
+    gf_note_off(&synth, 1);
+    CHECK(synth.voices[1].amp.stage == GF_RELEASE && synth.voices[0].amp.stage != GF_RELEASE);
 }
 
 static void sample_and_delay(void)
@@ -371,6 +435,7 @@ int main(int argc, char **argv)
     CHECK(argc == 2);
     synthesis();
     notes_and_controls();
+    tuning();
     sample_and_delay();
     resonant_filter();
     modulation_matrix();

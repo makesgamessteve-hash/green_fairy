@@ -59,7 +59,7 @@ jobs:
           cmake -S . -B build-core -DGF_BUILD_APP=OFF -DGF_COVERAGE=ON
           cmake --build build-core --parallel
           ctest --test-dir build-core --output-on-failure
-          python -m gcovr --root . --filter 'src/(synth|bank)\.c$' --fail-under-line 95 --fail-under-branch 95 build-core
+          python -m gcovr --root . --filter 'src/(synth|bank|tuning)\.c$' --fail-under-line 95 --fail-under-branch 95 build-core
 
   browser:
     runs-on: ubuntu-latest

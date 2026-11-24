@@ -69,7 +69,12 @@ void gf_control(GF_Synth *s, GF_Control control, float value)
 
 void gf_note_on(GF_Synth *s, int note, float velocity)
 {
-    if (note < 0 || note >= GF_NOTES) return;
+    gf_note_on_pitch(s, note, (float)note, velocity);
+}
+
+void gf_note_on_pitch(GF_Synth *s, int note, float pitch, float velocity)
+{
+    if (note < 0 || note >= GF_NOTES || !isfinite(pitch) || pitch < 0 || pitch > GF_NOTES - 1) return;
     if (!isfinite(velocity) || velocity <= 0) {
         gf_note_off(s, note);
         return;
@@ -88,7 +93,7 @@ void gf_note_on(GF_Synth *s, int note, float velocity)
     if (!choice) choice = oldest;
     *choice = (GF_Voice){
         .note = note, .age = ++s->age, .pitch_ratio = 1,
-        .frequency = 440 * exp2f((note - 69) / 12.0f),
+        .pitch = pitch, .frequency = 440 * exp2f((pitch - 69) / 12.0f),
         .velocity = clamp(velocity, 0, 1)
     };
 }
@@ -244,7 +249,7 @@ static void update_modulation(GF_Synth *s, GF_Voice *v, float lfo, float cutoff)
     if (p->route_count) {
         const float sources[GF_MOD_SOURCES] = {
             lfo, v->amp.level, v->filter_env.level, v->shape_level, v->velocity,
-            clamp((v->note - 60) / 60.f, -1, 1), p->color, p->morph, p->echo
+            clamp((v->pitch - 60) / 60.f, -1, 1), p->color, p->morph, p->echo
         };
         memset(v->modulation, 0, sizeof(v->modulation));
         for (unsigned i = 0; i < p->route_count; ++i) {
@@ -256,7 +261,7 @@ static void update_modulation(GF_Synth *s, GF_Voice *v, float lfo, float cutoff)
     if (p->filter.mode != GF_FILTER_LEGACY) {
         const GF_Filter *filter = &p->filter;
         const float octaves = v->filter_env.level * filter->depth + v->velocity * filter->velocity +
-            (v->note - 60) * filter->keytrack / 12 + v->modulation[GF_MOD_CUTOFF];
+            (v->pitch - 60) * filter->keytrack / 12 + v->modulation[GF_MOD_CUTOFF];
         const float frequency = clamp(cutoff * exp2f(octaves), 20, fminf(18000, s->rate * .45f));
         const float target = tanf(.5f * TAU * frequency / s->rate);
         if (!v->filter_g) v->filter_g = target;
