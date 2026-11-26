@@ -16,7 +16,7 @@ static float clamp(float value, float low, float high)
 GF_Patch gf_default_patch(void)
 {
     return (GF_Patch){
-        .name = "Glass Canopy", .wave_a = GF_TRIANGLE, .wave_b = GF_SINE,
+        .name = "Glass Canopy", .type = GF_TYPE_OTHER, .wave_a = GF_TRIANGLE, .wave_b = GF_SINE,
         .attack = .08f, .decay = .5f, .sustain = .65f, .release = 1.1f,
         .morph = .35f, .color = .62f, .echo = .38f, .detune = 9,
         .fm = .4f, .lfo = .27f, .motion = .19f,

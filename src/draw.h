@@ -32,6 +32,7 @@ void line(float x1, float y1, float x2, float y2, float thickness, Color color);
 void text(float x, float y, float size, Color color, const char *message);
 float text_width(float size, const char *message);
 void sprite(Rect rect, int index, Color color);
+void star(float x, float y, float radius, Color color, bool filled);
 bool mesh_load(Mesh *mesh, const char *path);
 void mesh_draw(const Mesh *mesh, float x, float y, float scale, MeshPose pose, Color tint, Color accent);
 

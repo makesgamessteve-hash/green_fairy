@@ -297,6 +297,22 @@ float text_width(float size, const char *message)
     return length * size * .6f;
 }
 
+void star(float x, float y, float radius, Color color, bool filled)
+{
+    static const float points[10][2] = {
+        {0, -1}, {.26f, -.36f}, {.95f, -.31f}, {.42f, .14f}, {.59f, .81f},
+        {0, .44f}, {-.59f, .81f}, {-.42f, .14f}, {-.95f, -.31f}, {-.26f, -.36f}
+    };
+    const Vertex center = solid(x, y, color);
+    for (int i = 0; i < 10; ++i) {
+        const int j = (i + 1) % 10;
+        const float ax = x + points[i][0] * radius, ay = y + points[i][1] * radius;
+        const float bx = x + points[j][0] * radius, by = y + points[j][1] * radius;
+        if (filled) triangle(center, solid(ax, ay, color), solid(bx, by, color));
+        else line(ax, ay, bx, by, 1.25f, color);
+    }
+}
+
 void sprite(Rect rect, int index, Color color)
 {
     if (index == 2) tile(rect, 85, 138, 8, 8, color);

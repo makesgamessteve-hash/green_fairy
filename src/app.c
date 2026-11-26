@@ -24,6 +24,10 @@ typedef struct {
     SDL_AudioStream *audio;
     GF_Synth synth;
     GF_Bank bank;
+    GF_Catalog catalog;
+    GF_Favorites favorites;
+    GF_PresetType type_filter, type_focus;
+    bool type_menu;
     Mesh prism, custom_mesh;
     const Mesh *scene_mesh;
     Layout layout;
@@ -33,7 +37,7 @@ typedef struct {
     GF_Tuning custom_tuning, tuning_draft;
     int octave, tuning_index, tuning_focus;
     TuningOverlay tuning_overlay;
-    char tuning_path[4096];
+    char tuning_path[4096], favorites_path[4096];
     size_t selected;
     float controls[GF_CONTROL_COUNT];
     float *sample;
@@ -141,16 +145,57 @@ static void restore_tuning(int index, int octave, int root, unsigned degrees)
     app.octave = gf_tuning_octave(active_tuning(), octave);
 }
 
-static void init_tuning(bool smoke)
+static void load_favorites(void)
+{
+    size_t bytes;
+    uint32_t *ids = SDL_LoadFile(app.favorites_path, &bytes);
+    if (!ids) return;
+    if (bytes <= sizeof(app.favorites.ids) && bytes % sizeof(*ids) == 0) {
+        app.favorites.count = 0;
+        for (size_t i = 0; i < bytes / sizeof(*ids); ++i) gf_favorite_set(&app.favorites, ids[i], true);
+    }
+    SDL_free(ids);
+}
+
+#ifdef __EMSCRIPTEN__
+EM_JS(void, save_web_favorites, (void), {
+    try {
+        const data = Module.FS.readFile("/favorites.bin");
+        localStorage.setItem("green-fairy.favorites.v1", btoa(String.fromCharCode(...data)));
+    } catch (_) {}
+})
+#endif
+
+static void save_favorites(void)
+{
+    if (!app.favorites_path[0]) return;
+    const uint32_t empty = 0;
+    const void *data = app.favorites.count ? app.favorites.ids : &empty;
+    const size_t count = app.favorites.count ? app.favorites.count : 1;
+    if (!SDL_SaveFile(app.favorites_path, data, count * sizeof(uint32_t))) {
+        SDL_Log("Save favorites: %s", SDL_GetError());
+        return;
+    }
+#ifdef __EMSCRIPTEN__
+    save_web_favorites();
+#endif
+}
+
+static void init_preferences(bool smoke)
 {
     app.custom_tuning = gf_tunings[0];
     app.octave = 2;
     if (smoke) return;
-#ifndef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
+    SDL_strlcpy(app.favorites_path, "/favorites.bin", sizeof(app.favorites_path));
+#else
     char *path = SDL_GetPrefPath("Green Fairy", "Instrument");
     if (!path) return;
     const int size = SDL_snprintf(app.tuning_path, sizeof(app.tuning_path), "%stuning.txt", path);
+    const int favorite_size = SDL_snprintf(app.favorites_path, sizeof(app.favorites_path), "%sfavorites.bin", path);
     SDL_free(path);
+    if (favorite_size >= 0 && (size_t)favorite_size < sizeof(app.favorites_path)) load_favorites();
+    else app.favorites_path[0] = 0;
     if (size < 0 || (size_t)size >= sizeof(app.tuning_path)) {
         app.tuning_path[0] = 0;
         return;
@@ -324,10 +369,52 @@ static void select_patch(size_t index)
     app.controls[GF_ECHO] = patch->echo;
 }
 
+static void select_visible(size_t position)
+{
+    if (position >= app.catalog.count) return;
+    app.catalog.position = position;
+    select_patch(app.catalog.indices[position]);
+}
+
+static void rebuild_catalog(size_t fallback_position)
+{
+    gf_catalog_update(&app.catalog, &app.bank, &app.favorites, app.type_filter, app.selected);
+    if (app.type_filter == GF_TYPE_OTHER && !app.catalog.count) {
+        app.type_filter = GF_TYPE_ALL;
+        gf_catalog_update(&app.catalog, &app.bank, &app.favorites, app.type_filter, app.selected);
+    }
+    if (app.catalog.position == SIZE_MAX && app.catalog.count)
+        select_visible(SDL_min(fallback_position, app.catalog.count - 1));
+}
+
+static void choose_type(GF_PresetType type)
+{
+    app.type_menu = false;
+    app.type_filter = type;
+    rebuild_catalog(0);
+}
+
+static void toggle_favorite(void)
+{
+    const uint32_t id = app.bank.patches[app.selected].id;
+    if (!gf_favorite_set(&app.favorites, id, !app.catalog.starred[app.selected])) return;
+    save_favorites();
+    const size_t position = app.catalog.position == SIZE_MAX ? 0 : app.catalog.position;
+    rebuild_catalog(position);
+}
+
+static void open_type_menu(void)
+{
+    release_input();
+    app.type_focus = app.type_filter;
+    app.type_menu = true;
+}
+
 static bool reload_bank(void)
 {
     char path[4096], error[256];
     asset_path(path, sizeof(path), "scripts", "bank.lua");
+    const uint32_t previous = app.bank.count ? app.bank.patches[app.selected].id : 0;
     size_t length;
     char *source = SDL_LoadFile(path, &length);
     if (!source) {
@@ -340,14 +427,22 @@ static bool reload_bank(void)
         status(error);
         return false;
     }
-    select_patch(app.selected < app.bank.count ? app.selected : 0);
+    size_t selection = 0;
+    for (size_t i = 0; i < app.bank.count; ++i) {
+        if (app.bank.patches[i].id != previous) continue;
+        selection = i;
+        break;
+    }
+    select_patch(selection);
+    rebuild_catalog(0);
     return true;
 }
 
 static void step_patch(int step)
 {
-    const int count = (int)app.bank.count;
-    select_patch((size_t)(((int)app.selected + step % count + count) % count));
+    const int count = (int)app.catalog.count;
+    if (!count) return;
+    select_visible((size_t)(((int)app.catalog.position + step % count + count) % count));
 }
 
 static void update_control(const Layout *layout, int control, float x)
@@ -381,7 +476,24 @@ static void pointer(Contact *contact, const Layout *layout, int phase, float x, 
         else update_note(contact, layout, x, y);
         return;
     }
+    if (app.type_menu) {
+        app.type_menu = false;
+        for (int i = 0; i < app.catalog.type_count; ++i) {
+            if (!inside(panel_type_option(layout, (GF_PresetType)i), x, y)) continue;
+            choose_type((GF_PresetType)i);
+            break;
+        }
+        return;
+    }
     if (tuning_press(layout, x, y)) return;
+    if (inside(panel_type_filter(layout), x, y)) {
+        open_type_menu();
+        return;
+    }
+    if (inside(panel_favorite(layout), x, y)) {
+        toggle_favorite();
+        return;
+    }
     const struct { Rect bounds; int step; } navigation[] = {
         {layout->jump_back, -GF_PATCH_JUMP}, {layout->previous, -1},
         {layout->next, 1}, {layout->jump_forward, GF_PATCH_JUMP}
@@ -393,9 +505,9 @@ static void pointer(Contact *contact, const Layout *layout, int phase, float x, 
         }
     }
     if (!layout->touch && inside(layout->bank, x, y)) {
-        const size_t first = panel_first_patch(app.selected, app.bank.count);
-        for (size_t i = 0; i < GF_VISIBLE_PATCHES && first + i < app.bank.count; ++i)
-            if (inside(panel_patch_row(layout, i), x, y)) select_patch(first + i);
+        const size_t first = panel_first_patch(app.catalog.position, app.catalog.count);
+        for (size_t i = 0; i < GF_VISIBLE_PATCHES && first + i < app.catalog.count; ++i)
+            if (inside(panel_patch_row(layout, i), x, y)) select_visible(first + i);
         return;
     }
     contact_end(contact);
@@ -492,6 +604,16 @@ static void keyboard_event(const SDL_KeyboardEvent *event)
         return;
     }
     if (event->repeat || (event->mod & (SDL_KMOD_CTRL | SDL_KMOD_ALT | SDL_KMOD_GUI))) return;
+    if (app.type_menu) {
+        const int count = app.catalog.type_count;
+        if (event->scancode == SDL_SCANCODE_ESCAPE || event->scancode == SDL_SCANCODE_F2) app.type_menu = false;
+        else if (event->scancode == SDL_SCANCODE_RETURN) choose_type(app.type_focus);
+        else if (event->scancode == SDL_SCANCODE_UP)
+            app.type_focus = (GF_PresetType)((app.type_focus + count - 1) % count);
+        else if (event->scancode == SDL_SCANCODE_DOWN)
+            app.type_focus = (GF_PresetType)((app.type_focus + 1) % count);
+        return;
+    }
     if (app.tuning_overlay != GF_TUNING_CLOSED) {
         tuning_keyboard(event->scancode);
         return;
@@ -506,6 +628,10 @@ static void keyboard_event(const SDL_KeyboardEvent *event)
         return;
     case SDL_SCANCODE_UP: step_patch(-1); return;
     case SDL_SCANCODE_DOWN: step_patch(1); return;
+    case SDL_SCANCODE_F2: open_type_menu(); return;
+    case SDL_SCANCODE_F8: toggle_favorite(); return;
+    case SDL_SCANCODE_HOME: select_visible(0); return;
+    case SDL_SCANCODE_END: if (app.catalog.count) select_visible(app.catalog.count - 1); return;
     case SDL_SCANCODE_PAGEUP: step_patch(-GF_PATCH_JUMP); return;
     case SDL_SCANCODE_PAGEDOWN: step_patch(GF_PATCH_JUMP); return;
 #ifndef __EMSCRIPTEN__
@@ -574,7 +700,9 @@ static PanelView view(void)
     audio_unlock();
     return (PanelView){
         .bank = &app.bank, .mesh = app.scene_mesh, .prism = &app.prism,
-        .selected = app.selected, .octave = app.octave, .tuning = active_tuning(),
+        .selected = app.selected, .catalog = &app.catalog, .type_filter = app.type_filter,
+        .type_focus = app.type_focus, .type_menu = app.type_menu,
+        .octave = app.octave, .tuning = active_tuning(),
         .draft = &app.tuning_draft, .tuning_index = app.tuning_index,
         .tuning_focus = app.tuning_focus, .tuning_overlay = app.tuning_overlay,
         .voices = app.voices, .held = app.held, .controls = app.controls, .peak = app.peak,
@@ -648,7 +776,7 @@ static bool initialize(bool smoke)
                                               audio_callback, &app.synth);
         if (app.audio) SDL_ResumeAudioStreamDevice(app.audio);
     }
-    init_tuning(smoke);
+    init_preferences(smoke);
     for (int i = 0; i < SDL_SCANCODE_COUNT; ++i) app.key_note[i] = -1;
     if (!reload_bank()) {
         app.bank.patches[0] = gf_default_patch();
@@ -656,6 +784,7 @@ static bool initialize(bool smoke)
         app.bank.count = 1;
         app.scene_mesh = &app.prism;
         app.scene_started = SDL_GetTicks();
+        rebuild_catalog(0);
     }
     resize();
     app.ready = app.running = true;
@@ -707,6 +836,15 @@ EMSCRIPTEN_KEEPALIVE void gf_web_release(void)
 EMSCRIPTEN_KEEPALIVE int gf_web_ready(void) { return app.ready; }
 EMSCRIPTEN_KEEPALIVE int gf_web_touch(void) { return app.layout.touch; }
 EMSCRIPTEN_KEEPALIVE int gf_web_patch(void) { return (int)app.selected; }
+EMSCRIPTEN_KEEPALIVE int gf_web_type(void) { return app.type_filter; }
+EMSCRIPTEN_KEEPALIVE int gf_web_preset_count(void) { return (int)app.catalog.count; }
+EMSCRIPTEN_KEEPALIVE int gf_web_starred(void) { return app.catalog.starred[app.selected]; }
+EMSCRIPTEN_KEEPALIVE void gf_web_restore_favorites(void)
+{
+    load_favorites();
+    rebuild_catalog(0);
+}
+
 EMSCRIPTEN_KEEPALIVE int gf_web_tuning(void) { return app.tuning_index; }
 EMSCRIPTEN_KEEPALIVE int gf_web_tuning_overlay(void) { return app.tuning_overlay; }
 EMSCRIPTEN_KEEPALIVE int gf_web_tuning_cents(int key)
@@ -782,7 +920,7 @@ EMSCRIPTEN_KEEPALIVE void gf_xr_draw(int x, int y, int width, int height)
 #else
 static bool smoke_test(void)
 {
-    if (app.bank.count != GF_PATCHES || !app.sample || !app.audio || !app.prism.face_count) return false;
+    if (app.bank.count != GF_FACTORY_PRESETS || !app.sample || !app.audio || !app.prism.face_count) return false;
     for (size_t i = 0; i < app.bank.count; ++i) {
         select_patch(i);
         if (app.status[0] || !app.scene_mesh->face_count) return false;
@@ -803,7 +941,7 @@ static bool smoke_test(void)
             frame_loop();
             if (app.held[7]) return false;
             step_patch(-1);
-            if (app.selected != GF_PATCHES - 1) return false;
+            if (app.selected != GF_FACTORY_PRESETS - 1) return false;
             step_patch(1);
             if (app.selected != 0 || !app.sample) return false;
             step_patch(1);

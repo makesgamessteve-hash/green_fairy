@@ -65,6 +65,13 @@ var Module = {
                 if (Array.isArray(saved) && saved.length === 4 && saved.every(Number.isSafeInteger))
                     Module._gf_web_restore_tuning(...saved);
             } catch (_) {}
+            try {
+                const favorites = localStorage.getItem("green-fairy.favorites.v1");
+                if (favorites && favorites.length <= 6400) {
+                    Module.FS.writeFile("/favorites.bin", Uint8Array.from(atob(favorites), c => c.charCodeAt(0)));
+                    Module._gf_web_restore_favorites();
+                }
+            } catch (_) {}
             statusMessage.hidden = true;
             new ResizeObserver(resizeInstrument).observe(canvas);
             coarsePointer.addEventListener("change", resizeInstrument);

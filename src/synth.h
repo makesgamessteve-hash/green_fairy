@@ -4,9 +4,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
-enum { GF_VOICES = 12, GF_PATCHES = 100, GF_NAME = 32, GF_MAX_RATE = 96000,
+enum { GF_VOICES = 12, GF_PATCHES = 1200, GF_NAME = 32, GF_MAX_RATE = 96000,
        GF_NOTES = 128, GF_DELAY = GF_MAX_RATE / 2,
        GF_MOD_ROUTES = 8, GF_SEGMENTS = 8, GF_GRAINS = 8 };
+
+typedef enum { GF_TYPE_ALL, GF_TYPE_FAVORITES, GF_TYPE_PADS, GF_TYPE_LEADS, GF_TYPE_STRINGS,
+               GF_TYPE_CHOIR, GF_TYPE_BASS, GF_TYPE_KEYS, GF_TYPE_PLUCKS, GF_TYPE_RHYTHMS,
+               GF_TYPE_PERCUSSION, GF_TYPE_DRONES, GF_TYPE_OTHER, GF_TYPE_COUNT } GF_PresetType;
+
+enum { GF_FACTORY_PRESETS = (GF_TYPE_OTHER - GF_TYPE_PADS) * 100 };
 
 typedef enum { GF_SINE, GF_TRIANGLE, GF_SAW, GF_SQUARE, GF_NOISE } GF_Wave;
 typedef enum { GF_MORPH, GF_COLOR, GF_ECHO, GF_CONTROL_COUNT } GF_Control;
@@ -37,6 +43,8 @@ typedef struct { float size, density, position, spray; } GF_Granular;
 
 typedef struct {
     char name[GF_NAME];
+    uint32_t id;
+    GF_PresetType type;
     GF_Wave wave_a, wave_b;
     float attack, decay, sustain, release;
     float morph, color, echo, detune, fm, lfo, motion, sample;

@@ -4,6 +4,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -160,7 +161,13 @@ static int basename_only(const char *name)
 
 static void read_patch(lua_State *state, GF_Patch *p)
 {
+    static const char *const types[] = {
+        "pads", "leads", "strings", "choir", "bass", "keys", "plucks",
+        "rhythms", "percussion", "drones", "other"
+    };
     *p = gf_default_patch();
+    p->type = (GF_PresetType)(GF_TYPE_PADS + choice(state, "type", types,
+        GF_TYPE_COUNT - GF_TYPE_PADS, GF_TYPE_OTHER - GF_TYPE_PADS));
     string_field(state, "name", p->name, sizeof(p->name));
     string_field(state, "sample_file", p->sample_file, sizeof(p->sample_file));
     if (!basename_only(p->sample_file))
@@ -219,6 +226,26 @@ static void read_scene(lua_State *state, GF_Scene *scene)
     lua_pop(state, 1);
 }
 
+static bool id_used(const GF_Bank *bank, size_t count, uint32_t id)
+{
+    for (size_t i = 0; i < count; ++i)
+        if (bank->patches[i].id == id) return true;
+    return false;
+}
+
+static uint32_t read_preset_id(lua_State *state, const GF_Bank *bank, size_t index)
+{
+    char id[GF_NAME] = {0};
+    string_field(state, "id", id, sizeof(id));
+    if (!basename_only(id)) luaL_error(state, "id must use letters, digits, dashes, underscores or dots");
+    const unsigned char *name = (const unsigned char *)(id[0] ? id : bank->patches[index].name);
+    uint32_t hash = UINT32_C(2166136261);
+    for (; *name; ++name) hash = (hash ^ *name) * UINT32_C(16777619);
+    if (id[0] && id_used(bank, index, hash)) luaL_error(state, "duplicate preset id: %s", id);
+    while (!hash || id_used(bank, index, hash)) ++hash;
+    return hash;
+}
+
 typedef struct {
     GF_Bank bank;
     const char *source;
@@ -233,7 +260,7 @@ static int execute_bank(lua_State *state)
     lua_pop(state, 1);
     if (luaL_loadbufferx(state, input->source, input->length, "@assets/scripts/bank.lua", "t") != LUA_OK)
         return lua_error(state);
-    lua_sethook(state, limit, LUA_MASKCOUNT, 100000);
+    lua_sethook(state, limit, LUA_MASKCOUNT, 2000000);
     lua_call(state, 0, 1);
     if (!lua_istable(state, -1)) return luaL_error(state, "bank must return a table");
     bank->count = lua_rawlen(state, -1);
@@ -244,6 +271,7 @@ static int execute_bank(lua_State *state)
         if (!lua_istable(state, -1))
             return luaL_error(state, "patch %d must be a table", (int)i + 1);
         read_patch(state, &bank->patches[i]);
+        bank->patches[i].id = read_preset_id(state, bank, i);
         read_scene(state, &bank->scenes[i]);
         lua_pop(state, 1);
     }

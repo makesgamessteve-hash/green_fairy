@@ -17,7 +17,7 @@ list(REMOVE_ITEM lua_sources "${lua_SOURCE_DIR}/src/lua.c" "${lua_SOURCE_DIR}/sr
 add_library(gf_lua STATIC ${lua_sources})
 target_include_directories(gf_lua PUBLIC "${lua_SOURCE_DIR}/src")
 
-add_library(gf_core STATIC src/synth.c src/bank.c src/tuning.c)
+add_library(gf_core STATIC src/synth.c src/bank.c src/tuning.c src/catalog.c)
 set_target_properties(gf_core PROPERTIES C_EXTENSIONS OFF)
 target_include_directories(gf_core PUBLIC src)
 target_link_libraries(gf_core PRIVATE gf_lua)

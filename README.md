@@ -1,6 +1,6 @@
 # Green Fairy
 
-Green Fairy is a standalone 12-voice software synthesizer with 100 presets, including evolving pads, keys, plucks, basses, leads, percussion, and sound effects. The original retro 3D instrument panel runs with SDL3 and OpenGL on desktop, and with WebGL 2 on the web. The C engine handles audio, input, and rendering. Editable Lua scripts define the sounds and 3D scenes for the patch bank.
+Green Fairy is a standalone 12-voice software synthesizer with 1,000 factory presets inspired by science-fiction and fantasy film scores. The retro 3D instrument panel runs with SDL3 and OpenGL on desktop, and with WebGL 2 on the web. The C engine handles audio, input, and rendering. Editable Lua scripts define the sounds and 3D scenes for the patch bank.
 
 ## Play
 
@@ -10,8 +10,11 @@ Green Fairy is a standalone 12-voice software synthesizer with 100 presets, incl
 | Accent a note | Hold Shift while playing | |
 | Change tuning | Enter, then Up / Down and Enter | Tuning dropdown |
 | Build a tuning | Space | Build |
+| Filter presets by type | F2, then Up / Down and Enter | Preset type dropdown |
+| Star or unstar the current preset | F8 | Star next to the type dropdown |
 | Change presets | Up / Down | Preset list or `<` / `>` |
 | Jump ten presets | Page Up / Page Down | `<<` / `>>` |
+| Select the first or last matching preset | Home / End | |
 | Shift the keyboard one octave | Left / Right | `-` / `+` |
 | Reload an edited patch bank | F5 on desktop | Refresh on the web |
 | Shape the sound | | Drag Morph, Color, or Echo |
@@ -20,7 +23,9 @@ The web app uses larger touch keys on mobile. The browser enables audio after th
 
 Each preset changes the Signal Field's model, palette, rotation, and orbiting fragments. Played notes pulse the model. Morph increases its vertical motion, Color shifts its material toward the accent color, and Echo spreads the orbits.
 
-All 100 factory presets use resonant voice filters and modulation routes tuned to their sound. Thirty-six use looping shapes and 21 use granular layers. Try **Vesper Bass** for an envelope with a sharp attack, **Thump Coil** for a short pitch drop, **Neon Weave** for a repeating sweep, and **Rain on Glass** for a granular texture built from a new glass-strike WAV. The Signal Field identifies resonant filter modes and granular presets.
+The factory bank includes 100 presets each for Pads, Leads, Strings, Choir, Bass, Keys & Bells, Plucks, Rhythms, Percussion, and Drones & FX. Pick a type to browse that family, or choose **Favorites** in the same dropdown to find your starred sounds. Favorites are saved on the current desktop account or browser.
+
+Every factory preset uses a resonant voice filter and modulation tailored to its sound. Try **Vesper Bass** for a sharply articulated envelope, **Neon Weave** for a repeating sweep, or **Rain on Glass** for granular texture built from a glass strike. The expanded bank includes bowed-metal and breath layers for the strings and choir. The Signal Field identifies resonant filter modes and granular presets.
 
 ### Tunings
 
@@ -92,7 +97,7 @@ Set the repository's **Settings → Pages → Build and deployment → Source** 
 
 Edit the installed `assets/` directory alongside the executable on Windows and Linux. On macOS it lives in the app bundle under `Contents/Resources/assets/`. On the web it lives alongside `instrument.wasm`.
 
-- **Scripts.** Edit `assets/scripts/bank.lua`. Return an ordered array of 1–100 patch tables. Omitted fields take their defaults. Lua arithmetic and the `math` library are available.
+- **Scripts.** Edit `assets/scripts/bank.lua`. Return an ordered array of 1–1,200 patch tables. Omitted fields take their defaults. Lua arithmetic and the `math` library are available. Give custom patches explicit IDs to keep their favorites attached through renaming and reordering.
 - **Sounds.** Add a WAV file to `assets/sounds/`, put its filename in `sample_file`, and set the `sample` gain. The sample pitch is rooted at C4. Add a `grain` table for granular playback. Glass Canopy uses a one-shot of `canopy.wav`, and Night Orchard granulates `orchard-air.wav`.
 - **Graphics.** Set a patch's `scene` fields to change its appearance. Store meshes under `assets/graphics/` as OBJ files with up to 256 vertices and 512 triangular faces, coordinates from −2 to 2, and plain one-based face indices. Missing or unreadable custom meshes use `prism.obj`. Replace `studio.bmp` to reskin the glyphs and sprites while keeping the 192 × 160 dimensions and existing tile locations.
 - **Web files.** Add each new asset referenced by a script to `assets/manifest.json`. The web app fetches the files at startup, so a page refresh picks up deployed edits.
@@ -100,6 +105,8 @@ Edit the installed `assets/` directory alongside the executable on Windows and L
 | Lua fields | Values |
 | --- | --- |
 | `name`, `sample_file` | Text up to 31 bytes. Use a filename under `assets/sounds/` for samples. |
+| `id` | Optional unique, stable identifier of up to 31 characters. Use ASCII letters, digits, hyphens, underscores, and dots. The patch name supplies the default identifier. |
+| `type` | `pads`, `leads`, `strings`, `choir`, `bass`, `keys`, `plucks`, `rhythms`, `percussion`, `drones`, or `other`. The default is `other`. |
 | `wave_a`, `wave_b` | `sine`, `triangle`, `saw`, `square`, `noise` |
 | `attack`, `decay`, `release` | Seconds. Attack and decay 0–10, release 0–20. |
 | `sustain`, `morph`, `color`, `echo`, `motion`, `sample` | 0–1 |
@@ -136,13 +143,13 @@ The entry point and SDL integration are in `src/app.c`. The DSP and Lua loader a
 
 ## Verify
 
-GitHub Actions builds the native targets for Linux, Windows, and macOS, runs desktop and browser integration checks, and enforces 95% unit line and branch coverage across the C DSP, tuning code, and Lua loader. Use the following commands locally with GCC, gcovr, and a built web distribution.
+GitHub Actions builds the native targets for Linux, Windows, and macOS, runs desktop and browser integration checks, and enforces 95% unit line and branch coverage across the C DSP, tuning code, preset catalog, and Lua loader. Use the following commands locally with GCC, gcovr, and a built web distribution.
 
 ```sh
 cmake -S . -B build-core -DGF_BUILD_APP=OFF -DGF_COVERAGE=ON
 cmake --build build-core --parallel
 ctest --test-dir build-core --output-on-failure
-python3 -m gcovr --root . --filter 'src/(synth|bank|tuning)\.c$' --fail-under-line 95 --fail-under-branch 95 build-core
+python3 -m gcovr --root . --filter 'src/(synth|bank|tuning|catalog)\.c$' --fail-under-line 95 --fail-under-branch 95 build-core
 
 SDL_AUDIODRIVER=dummy LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a ./build/green-fairy --smoke
 python3 -m pip install playwright==1.65.2
@@ -150,7 +157,7 @@ python3 -m playwright install chromium
 python3 tests/browser.py build-web/web
 ```
 
-The browser suite serves the build under a GitHub Pages-style project path and exercises desktop keyboard and pointer input, mobile touch, editable assets, and simulated stereo WebXR rendering and controller input. The OpenSpec change lives under `openspec/changes/create-green-fairy`.
+The browser suite serves the build under a GitHub Pages-style project path and exercises desktop keyboard and pointer input, mobile touch, preset filters and favorites persistence, editable assets, and simulated stereo WebXR rendering and controller input. The OpenSpec change lives under `openspec/changes/create-green-fairy`.
 
 ```sh
 npm exec --yes --package @fission-ai/openspec@2.1.1 -- openspec validate create-green-fairy --strict

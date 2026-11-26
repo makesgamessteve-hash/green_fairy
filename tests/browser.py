@@ -65,7 +65,8 @@ def desktop(browser, url, screenshots):
     page.on("response", lambda response: requests.add(response.url) if response.ok else None)
     errors = load(page, url)
     for path in ("manifest.json", "scripts/bank.lua", "sounds/canopy.wav", "sounds/orchard-air.wav",
-                 "sounds/filament.wav", "graphics/studio.bmp", "graphics/prism.obj"):
+                 "sounds/filament.wav", "sounds/choir-air.wav", "sounds/bowed-alloy.wav",
+                 "graphics/studio.bmp", "graphics/prism.obj"):
         assert url + "assets/" + path in requests, path
     assert sum(request.endswith(".obj") for request in requests) == 11
     assert page.evaluate("Module._gf_web_touch()") == 0
@@ -84,9 +85,12 @@ def desktop(browser, url, screenshots):
     page.wait_for_function("Module._gf_web_held() === 0")
 
     page.keyboard.press("PageUp")
-    page.wait_for_function("Module._gf_web_patch() === 90")
+    page.wait_for_function("Module._gf_web_patch() === 990")
     page.keyboard.press("PageDown")
     page.wait_for_function("Module._gf_web_patch() === 0")
+    page.keyboard.press("Home")
+    for _ in range(10):
+        page.keyboard.press("PageDown")
     page.keyboard.press("ArrowUp")
     page.wait_for_function("Module._gf_web_patch() === 99")
     green, violet = scene_colors(page)
@@ -96,7 +100,7 @@ def desktop(browser, url, screenshots):
     page.keyboard.down("a")
     page.wait_for_function("Module._gf_web_peak() > .012")
     page.keyboard.up("a")
-    page.keyboard.press("ArrowDown")
+    page.keyboard.press("Home")
     page.wait_for_function("Module._gf_web_patch() === 0")
 
     page.mouse.click(*point(page, 888, 407))
@@ -179,6 +183,62 @@ def mobile(browser, url, screenshots):
     page.touchscreen.tap(*point(page, 721, 137, 820, 454))
     assert page.evaluate("Module._gf_web_touch()") == 1
     page.wait_for_function("Module._gf_web_patch() === 2")
+    page.touchscreen.tap(*point(page, 540, 92, 820, 454))
+    page.touchscreen.tap(*point(page, 550, 169, 820, 454))
+    page.wait_for_function("Module._gf_web_type() === 2 && Module._gf_web_preset_count() === 100")
+    page.touchscreen.tap(*point(page, 778, 92, 820, 454))
+    page.wait_for_function("Module._gf_web_starred() === 1")
+    assert not errors, errors
+    page.close()
+
+
+def catalog(browser, url, screenshots):
+    page = browser.new_page(viewport={"width": 1160, "height": 834})
+    errors = load(page, url)
+    assert page.evaluate("Module._gf_web_preset_count()") == 1000
+
+    def choose(option, count):
+        page.mouse.click(*point(page, 752, 129))
+        page.mouse.click(*point(page, 752, 158 + option * 26))
+        page.wait_for_function(
+            "([type, count]) => Module._gf_web_type() === type && Module._gf_web_preset_count() === count",
+            arg=[option, count],
+        )
+
+    choose(4, 100)
+    string_index = page.evaluate("Module._gf_web_patch()")
+    assert string_index != 0
+    page.mouse.click(*point(page, 938, 129))
+    page.wait_for_function("Module._gf_web_starred() === 1")
+    choose(5, 100)
+    page.keyboard.press("End")
+    page.wait_for_function("Module._gf_web_patch() > 99")
+    choir_index = page.evaluate("Module._gf_web_patch()")
+    assert choir_index > 99 and choir_index != string_index
+    page.keyboard.down("a")
+    page.wait_for_function("Module._gf_web_held() === 1 && Module._gf_web_peak() > .01")
+    page.keyboard.up("a")
+    page.mouse.click(*point(page, 938, 129))
+    page.wait_for_function("Module._gf_web_starred() === 1")
+    choose(1, 2)
+    if screenshots:
+        page.locator("#canvas").screenshot(path=screenshots / "favorite-presets.png")
+    page.keyboard.press("Home")
+    page.wait_for_function("index => Module._gf_web_patch() === index", arg=string_index)
+
+    page.reload(wait_until="networkidle")
+    page.locator("#status").wait_for(state="hidden")
+    choose(1, 2)
+    page.mouse.click(*point(page, 938, 129))
+    page.wait_for_function(
+        "index => Module._gf_web_preset_count() === 1 && Module._gf_web_patch() === index",
+        arg=choir_index,
+    )
+    page.keyboard.press("F8")
+    page.wait_for_function("Module._gf_web_preset_count() === 0 && Module._gf_web_starred() === 0")
+    for key in ("F2", "ArrowUp", "Enter"):
+        page.keyboard.press(key)
+    page.wait_for_function("Module._gf_web_type() === 0 && Module._gf_web_preset_count() === 1000")
     assert not errors, errors
     page.close()
 
@@ -301,6 +361,8 @@ def test_project_site(site_root, chromium, screenshots):
             print("Desktop browser passed")
             mobile(browser, url, screenshots)
             print("Mobile touch passed")
+            catalog(browser, url, screenshots)
+            print("Preset types, favorites, and persistence passed")
             tuning(browser, url, screenshots)
             print("Tuning dropdown, 36 keys, and persisted builder passed")
             external_assets(browser, url)

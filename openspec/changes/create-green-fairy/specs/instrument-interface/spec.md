@@ -26,6 +26,17 @@ The instrument SHALL support physical key bindings and on-screen controls, and S
 - **WHEN** a touch device opens the web instrument and taps a key
 - **THEN** the layout provides touch-sized keys and the instrument plays and releases the note
 
+### Requirement: Preset type filters and favorites
+The instrument SHALL provide a preset type dropdown and a star control for the active preset. It SHALL save favorites locally using stable patch identifiers.
+
+#### Scenario: Browse one sound family
+- **WHEN** the player chooses a preset type
+- **THEN** the preset list, navigation, and count reflect only that sound family
+
+#### Scenario: Recall starred sounds
+- **WHEN** the player stars a preset, restarts the instrument, and chooses Favorites
+- **THEN** the preset appears in the filtered bank and can be played or unstarred
+
 ### Requirement: Scale-locked performance keyboard
 The instrument SHALL map the 26 letters and 10 digits to consecutive pitches in the selected tuning. Mouse, touch, and XR pads SHALL use the same mapping and display each pitch.
 

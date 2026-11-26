@@ -2,6 +2,7 @@
 #define GF_PANEL_H
 
 #include "draw.h"
+#include "catalog.h"
 #include "synth.h"
 #include "tuning.h"
 
@@ -18,6 +19,9 @@ typedef struct {
     const GF_Bank *bank;
     const Mesh *mesh, *prism;
     size_t selected, voices;
+    const GF_Catalog *catalog;
+    GF_PresetType type_filter, type_focus;
+    bool type_menu;
     const GF_Tuning *tuning, *draft;
     int octave, tuning_index, tuning_focus;
     TuningOverlay tuning_overlay;
@@ -39,6 +43,9 @@ Rect panel_key(const Layout *layout, int index);
 int panel_note(const Layout *layout, float x, float y);
 size_t panel_first_patch(size_t selected, size_t count);
 Rect panel_patch_row(const Layout *layout, size_t row);
+Rect panel_type_filter(const Layout *layout);
+Rect panel_favorite(const Layout *layout);
+Rect panel_type_option(const Layout *layout, GF_PresetType type);
 Rect panel_track(const Layout *layout, int index);
 void panel_draw_tuning(const Layout *layout, const PanelView *view);
 void panel_draw(const Layout *layout, const PanelView *view);

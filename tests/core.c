@@ -1,4 +1,5 @@
 #include "synth.h"
+#include "catalog.h"
 #include "tuning.h"
 
 #include <math.h>
@@ -299,14 +300,57 @@ static void granular_sample(void)
     CHECK(memcmp(output, reference, sizeof(reference)) == 0);
 }
 
+static void catalog(void)
+{
+    static GF_Bank bank;
+    GF_Catalog shown;
+    GF_Favorites favorites = {0};
+    bank.count = 3;
+    bank.patches[0] = (GF_Patch){.id = 101, .type = GF_TYPE_PADS};
+    bank.patches[1] = (GF_Patch){.id = 205, .type = GF_TYPE_STRINGS};
+    bank.patches[2] = (GF_Patch){.id = 309, .type = GF_TYPE_PADS};
+
+    CHECK(!gf_favorite_set(&favorites, 0, true));
+    CHECK(gf_favorite_set(&favorites, 205, false) && favorites.count == 0);
+    gf_catalog_update(&shown, &bank, &favorites, GF_TYPE_FAVORITES, 0);
+    CHECK(shown.count == 0 && shown.position == SIZE_MAX);
+    CHECK(gf_favorite_set(&favorites, 101, true));
+    CHECK(gf_favorite_set(&favorites, 309, true));
+    CHECK(gf_favorite_set(&favorites, 309, true) && favorites.count == 2);
+
+    gf_catalog_update(&shown, &bank, &favorites, GF_TYPE_ALL, 1);
+    CHECK(shown.count == 3 && shown.position == 1 && shown.type_count == GF_TYPE_OTHER);
+    CHECK(shown.starred[0] && !shown.starred[1] && shown.starred[2]);
+    gf_catalog_update(&shown, &bank, &favorites, GF_TYPE_PADS, 2);
+    CHECK(shown.count == 2 && shown.position == 1 && shown.indices[1] == 2);
+    gf_catalog_update(&shown, &bank, &favorites, GF_TYPE_CHOIR, 2);
+    CHECK(shown.count == 0 && shown.position == SIZE_MAX);
+
+    CHECK(gf_favorite_set(&favorites, 101, false));
+    const GF_Patch temp = bank.patches[0];
+    bank.patches[0] = bank.patches[2];
+    bank.patches[2] = temp;
+    gf_catalog_update(&shown, &bank, &favorites, GF_TYPE_FAVORITES, 2);
+    CHECK(shown.count == 1 && shown.position == SIZE_MAX);
+    CHECK(shown.indices[0] == 0 && shown.starred[0] && !shown.starred[2]);
+    bank.patches[1].type = GF_TYPE_OTHER;
+    gf_catalog_update(&shown, &bank, &favorites, GF_TYPE_OTHER, 1);
+    CHECK(shown.count == 1 && shown.position == 0 && shown.type_count == GF_TYPE_COUNT);
+
+    for (uint32_t i = 1; i <= GF_PATCHES; ++i) CHECK(gf_favorite_set(&favorites, i, true));
+    CHECK(!gf_favorite_set(&favorites, GF_PATCHES + 1, true));
+}
+
 static void factory_presets(const GF_Bank *bank)
 {
     float signatures[GF_PATCHES][16], sample[128];
-    size_t granular = 0, loops = 0;
+    size_t granular = 0, loops = 0, types[GF_TYPE_COUNT] = {0};
     for (size_t i = 0; i < sizeof(sample) / sizeof(*sample); ++i)
         sample[i] = .45f * sinf(6.2831853f * i / 128);
     for (size_t i = 0; i < bank->count; ++i) {
         const GF_Patch *patch = &bank->patches[i];
+        CHECK(patch->type >= GF_TYPE_PADS && patch->type < GF_TYPE_OTHER && patch->id);
+        ++types[patch->type];
         CHECK(patch->filter.mode != GF_FILTER_LEGACY && patch->route_count > 0);
         if (patch->grain.density > 0) {
             CHECK(patch->sample_file[0] && patch->sample > 0);
@@ -322,7 +366,8 @@ static void factory_presets(const GF_Bank *bank)
         for (size_t k = 0; k < 16; ++k) signatures[i][k] = output[(k + 1) * 479 * 2];
         for (size_t previous = 0; previous < i; ++previous) {
             CHECK(strcmp(patch->name, bank->patches[previous].name) != 0);
-            CHECK(bank->scenes[i].tint != bank->scenes[previous].tint);
+            CHECK(patch->id != bank->patches[previous].id);
+            if (i < 100) CHECK(bank->scenes[i].tint != bank->scenes[previous].tint);
             CHECK(memcmp(signatures[i], signatures[previous], sizeof(signatures[i])) != 0);
         }
         gf_set_patch(&synth, patch);
@@ -331,13 +376,14 @@ static void factory_presets(const GF_Bank *bank)
         gf_render(&synth, output, 8000);
         CHECK(energy(output, 16000) > .1f);
     }
-    CHECK(granular == 21 && loops == 36);
+    CHECK(granular > 200 && loops > 300);
+    for (int type = GF_TYPE_PADS; type < GF_TYPE_OTHER; ++type) CHECK(types[type] == 100);
 }
 
 static void lua_bank(const char *asset)
 {
     char error[256] = "initial";
-    GF_Bank bank;
+    static GF_Bank bank, last_good;
     FILE *file = fopen(asset, "rb");
     CHECK(file);
     CHECK(fseek(file, 0, SEEK_END) == 0);
@@ -350,7 +396,7 @@ static void lua_bank(const char *asset)
     CHECK(fclose(file) == 0);
     CHECK(gf_bank_parse(source, (size_t)length, &bank, error, sizeof(error)));
     free(source);
-    CHECK(bank.count == 100 && !error[0]);
+    CHECK(bank.count == GF_FACTORY_PRESETS && !error[0]);
     CHECK(strcmp(bank.patches[0].name, "Glass Canopy") == 0);
     CHECK(strcmp(bank.patches[0].sample_file, "canopy.wav") == 0);
     CHECK(bank.patches[4].detune == -1200);
@@ -363,12 +409,15 @@ static void lua_bank(const char *asset)
     CHECK(strcmp(bank.scenes[99].mesh, "helix.obj") == 0);
     CHECK(bank.scenes[99].tint == 0xbc70ee);
     factory_presets(&bank);
-    const GF_Bank last_good = bank;
+    last_good = bank;
     const struct { const char *lua, *error; } invalid[] = {
         {"return ][", "unexpected"},
         {"return 7", "return a table"},
-        {"return {}", "1 to 100"},
-        {"local bank = {}; for i = 1, 101 do bank[i] = {} end; return bank", "1 to 100"},
+        {"return {}", "1 to 1200"},
+        {"local bank = {}; for i = 1, 1201 do bank[i] = {} end; return bank", "1 to 1200"},
+        {"return {{type='all'}}", "unrecognized value for type"},
+        {"return {{id='not an id'}}", "id must use letters"},
+        {"return {{id='same'},{id='same'}}", "duplicate preset id"},
         {"return {3}", "patch 1"},
         {"return {{wave_a='no-such-wave'}}", "unrecognized value for wave_a"},
         {"return {{name=2}}", "nonempty text"},
@@ -424,6 +473,10 @@ static void lua_bank(const char *asset)
     CHECK(bank.patches[1].route_count == 0 && bank.patches[1].grain.density == 0);
     CHECK(strcmp(bank.scenes[1].mesh, GF_DEFAULT_MESH) == 0);
     CHECK(bank.scenes[1].tint == gf_default_scene().tint);
+    CHECK(bank.patches[0].type == GF_TYPE_OTHER);
+    const char duplicate_names[] = "return {{name='Repeated'},{name='Repeated'}}";
+    CHECK(gf_bank_parse(duplicate_names, sizeof(duplicate_names) - 1, &bank, error, sizeof(error)));
+    CHECK(bank.patches[0].id != bank.patches[1].id);
     const char partial[] = "return {{scene={tint=0x123456, satellites=0}}}";
     CHECK(gf_bank_parse(partial, sizeof(partial) - 1, &bank, error, sizeof(error)));
     CHECK(bank.scenes[0].tint == 0x123456 && bank.scenes[0].satellites == 0);
@@ -436,6 +489,7 @@ int main(int argc, char **argv)
     synthesis();
     notes_and_controls();
     tuning();
+    catalog();
     sample_and_delay();
     resonant_filter();
     modulation_matrix();

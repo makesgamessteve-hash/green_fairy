@@ -14,5 +14,7 @@
   "scripts/bank.lua",
   "sounds/canopy.wav",
   "sounds/filament.wav",
-  "sounds/orchard-air.wav"
+  "sounds/orchard-air.wav",
+  "sounds/choir-air.wav",
+  "sounds/bowed-alloy.wav"
 ]

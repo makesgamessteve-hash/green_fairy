@@ -8,7 +8,7 @@ The synth SHALL render stereo audio with multiple simultaneous notes and support
 - **THEN** the engine mixes their voices and finishes each release envelope
 
 ### Requirement: Lua patch bank
-The synth SHALL load an ordered bank of 1 to 100 patches from an external Lua file and support optional external WAV layers. The distributed bank SHALL contain 100 playable presets.
+The synth SHALL load an ordered bank of 1 to 1,200 patches from an external Lua file and support optional external WAV layers. The distributed bank SHALL contain at least 100 playable presets in each of ten sound families.
 
 #### Scenario: Apply a valid edit
 - **WHEN** a valid Lua patch bank is loaded
@@ -16,7 +16,7 @@ The synth SHALL load an ordered bank of 1 to 100 patches from an external Lua fi
 
 #### Scenario: Load the factory presets
 - **WHEN** the synth opens the distributed bank
-- **THEN** it loads all 100 presets and each preset produces audio when played
+- **THEN** it loads at least 1,000 playable presets across Pads, Leads, Strings, Choir, Bass, Keys & Bells, Plucks, Rhythms, Percussion, and Drones & FX
 
 #### Scenario: Reject invalid data
 - **WHEN** a replacement Lua bank fails to load or validate
@@ -44,7 +44,7 @@ A preset SHALL be able to layer grains from an external WAV, with independently 
 - **THEN** overlapping, windowed grains continue at note pitch until the voice releases
 
 ### Requirement: Factory preset voicing
-Every factory preset SHALL use a resonant voice filter and at least one modulation route. Looping envelopes and granular layers SHALL be used where they suit the preset's musical role.
+Every factory preset SHALL use a resonant voice filter and at least one modulation route. Looping envelopes and granular layers SHALL be used where they suit the preset's musical role. Factory sounds SHALL include original voicings inspired by epic science-fiction and fantasy scores.
 
 #### Scenario: Browse tuned factory presets
 - **WHEN** a player auditions the factory presets

@@ -47,6 +47,27 @@ Rect panel_patch_row(const Layout *layout, size_t row)
                   layout->bank.w - 32, 31};
 }
 
+Rect panel_type_filter(const Layout *layout)
+{
+    const Rect r = layout->bank;
+    return (Rect){r.x + (layout->touch ? 9 : 17), r.y + (layout->touch ? 6 : 10),
+                  layout->touch ? 106 : 169, layout->touch ? 31 : 24};
+}
+
+Rect panel_favorite(const Layout *layout)
+{
+    const Rect r = layout->bank, filter = panel_type_filter(layout);
+    return (Rect){r.x + r.w - (layout->touch ? 43 : 56), filter.y,
+                  layout->touch ? 34 : 39, filter.h};
+}
+
+Rect panel_type_option(const Layout *layout, GF_PresetType type)
+{
+    const Rect anchor = panel_type_filter(layout);
+    const float h = layout->height < 500 ? 23 : 26;
+    return (Rect){anchor.x, anchor.y + anchor.h + 4 + type * h, 177, h};
+}
+
 Rect panel_track(const Layout *layout, int index)
 {
     const Rect r = layout->controls[index];
@@ -193,43 +214,79 @@ static void button(Rect r, const char *label)
     center_text(r.x, r.y + (r.h - 20) / 2, r.w, 20, ink(0xd8e4bd), label);
 }
 
+static Color preset_accent(const PanelView *v)
+{
+    return blend(ink(v->bank->scenes[v->selected].accent), ink(0xe5ead2), .32f);
+}
+
+static void type_menu(const Layout *layout, const PanelView *v)
+{
+    const Color accent = preset_accent(v), pale = ink(0xe5ead2);
+    for (int i = 0; i < v->catalog->type_count; ++i) {
+        const GF_PresetType type = (GF_PresetType)i;
+        const Rect r = panel_type_option(layout, type);
+        const bool focus = type == v->type_focus;
+        box(r, focus ? ink(0x344a3b) : ink(0x182922));
+        frame(r, focus ? accent : ink(0x34493e));
+        text(r.x + 10, r.y + (r.h - 13) / 2, 13, type == v->type_filter ? accent : pale,
+             gf_type_names[i]);
+    }
+}
+
 static void patches(const Layout *layout, const PanelView *v)
 {
     const Rect r = layout->bank;
-    const Color highlighted = blend(ink(v->bank->scenes[v->selected].accent), ink(0xe5ead2), .32f);
-    const Color pale = ink(0xe5ead2), muted = ink(0x9fb2a3);
+    const GF_Catalog *catalog = v->catalog;
+    const Color highlighted = preset_accent(v), pale = ink(0xe5ead2), muted = ink(0x9fb2a3);
     const char *name = v->bank->patches[v->selected].name;
+    const Rect filter = panel_type_filter(layout), favorite = panel_favorite(layout);
     instrument_panel(r);
+    box(filter, ink(0x293b30));
+    frame(filter, v->type_menu ? highlighted : ink(0x526553));
+    text(filter.x + 7, filter.y + (filter.h - 11) / 2, 11, pale, gf_type_names[v->type_filter]);
+    text(filter.x + filter.w - 12, filter.y + (filter.h - 11) / 2, 11, highlighted, "v");
+    box(favorite, ink(0x293b30));
+    frame(favorite, ink(0x526553));
+    const bool starred = catalog->starred[v->selected];
+    star(favorite.x + favorite.w / 2, favorite.y + favorite.h / 2, 8, starred ? highlighted : muted, starred);
+
     button(layout->jump_back, "<<");
     button(layout->previous, "<");
     button(layout->next, ">");
     button(layout->jump_forward, ">>");
     char count[24];
-    snprintf(count, sizeof(count), "%03d / %03d", (int)v->selected + 1, (int)v->bank->count);
-    const float count_size = layout->touch ? 13 : 15;
+    const size_t position = catalog->position == SIZE_MAX ? 0 : catalog->position + 1;
+    snprintf(count, sizeof(count), "%d / %d", (int)position, (int)catalog->count);
+    const float count_size = layout->touch ? 12 : 13;
     const float count_y = layout->previous.y + (layout->previous.h - count_size) / 2;
-    center_text(r.x, count_y, r.w, count_size, muted, count);
+    const char *empty = v->type_filter == GF_TYPE_FAVORITES ? "No favorites" : "No presets";
+    center_text(r.x, count_y, r.w, count_size, muted, catalog->count || !layout->touch ? count : empty);
     if (layout->touch) {
-        const float width = r.w - 24;
-        const float size = fminf(25, 25 * width / fmaxf(1, text_width(25, name)));
-        center_text(r.x + 12, r.y + 9, width, size, pale, name);
+        const float left = filter.x + filter.w + 7;
+        const float width = favorite.x - left - 6;
+        const float size = fminf(20, 20 * width / fmaxf(1, text_width(20, name)));
+        center_text(left, filter.y + (filter.h - size) / 2, width, size, pale, name);
     } else {
-        text(r.x + 17, r.y + 13, 14, highlighted, "PRESET BANK");
         fit_text(r.x + 17, r.y + 39, r.w - 34, 30, pale, name);
         box((Rect){r.x + 17, r.y + 82, r.w - 34, 1}, ink(0x3e5041));
-        const size_t first = panel_first_patch(v->selected, v->bank->count);
-        for (size_t row = 0; row < GF_VISIBLE_PATCHES && first + row < v->bank->count; ++row) {
-            const size_t index = first + row;
+        if (!catalog->count) {
+            center_text(r.x, r.y + 140, r.w, 16, muted, empty);
+            return;
+        }
+        const size_t first = panel_first_patch(catalog->position, catalog->count);
+        for (size_t row = 0; row < GF_VISIBLE_PATCHES && first + row < catalog->count; ++row) {
+            const size_t index = catalog->indices[first + row];
             const Rect p = panel_patch_row(layout, row);
             const bool active = index == v->selected;
             box(p, active ? blend(ink(0x182820), highlighted, .17f) : ink(0x14221d));
             frame(p, ink(active ? 0x667955 : 0x293a31));
             if (active) box((Rect){p.x, p.y, 3, p.h}, highlighted);
             char number[12];
-            snprintf(number, sizeof(number), "%03d", (int)index + 1);
+            snprintf(number, sizeof(number), "%03d", (int)(first + row + 1));
             text(p.x + 11, p.y + 8, 14, active ? highlighted : muted, number);
-            fit_text(p.x + 44, p.y + 7, p.w - 53, 16, active ? pale : muted,
+            fit_text(p.x + 54, p.y + 7, p.w - 78, 16, active ? pale : muted,
                      v->bank->patches[index].name);
+            if (catalog->starred[index]) star(p.x + p.w - 13, p.y + p.h / 2, 5, highlighted, true);
         }
     }
 }
@@ -266,4 +323,5 @@ void panel_draw(const Layout *l, const PanelView *v)
     patches(l, v);
     parameters(l, v);
     panel_draw_tuning(l, v);
+    if (v->type_menu) type_menu(l, v);
 }
